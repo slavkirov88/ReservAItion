@@ -23,6 +23,7 @@
     "next": "16.1.6",
     "openai": "^6.27.0",
     "react": "19.2.3",
+    "react-day-picker": "^9.14.0",
     "react-dom": "19.2.3",
     "resend": "^6.9.3",
     "shadcn": "^4.0.2",
