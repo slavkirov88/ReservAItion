@@ -1,28 +1,28 @@
 // JSONB field types
-export interface Service {
+export type Service = {
   name: string
   duration_min: number
   price: number
 }
 
-export interface FAQ {
+export type FAQ = {
   question: string
   answer: string
 }
 
-export interface TranscriptEntry {
+export type TranscriptEntry = {
   role: 'user' | 'assistant'
   content: string
   timestamp?: string
 }
 
-export interface SlotOverride {
+export type SlotOverride = {
   start_time: string
   end_time: string
 }
 
 // Row types (what comes back from the database)
-export interface TenantRow {
+export type TenantRow = {
   id: string
   owner_id: string
   business_name: string
@@ -41,7 +41,7 @@ export interface TenantRow {
   updated_at: string
 }
 
-export interface BusinessProfileRow {
+export type BusinessProfileRow = {
   id: string
   tenant_id: string
   services: Service[]
@@ -53,7 +53,7 @@ export interface BusinessProfileRow {
   updated_at: string
 }
 
-export interface ScheduleRuleRow {
+export type ScheduleRuleRow = {
   id: string
   tenant_id: string
   day_of_week: number
@@ -66,7 +66,7 @@ export interface ScheduleRuleRow {
   created_at: string
 }
 
-export interface ScheduleOverrideRow {
+export type ScheduleOverrideRow = {
   id: string
   tenant_id: string
   date: string
@@ -76,7 +76,7 @@ export interface ScheduleOverrideRow {
   created_at: string
 }
 
-export interface AppointmentRow {
+export type AppointmentRow = {
   id: string
   tenant_id: string
   patient_name: string
@@ -91,7 +91,7 @@ export interface AppointmentRow {
   updated_at: string
 }
 
-export interface ConversationRow {
+export type ConversationRow = {
   id: string
   tenant_id: string
   channel: 'phone' | 'chat'
@@ -104,7 +104,7 @@ export interface ConversationRow {
 }
 
 // Insert types (what you send to create a record)
-export interface TenantInsert {
+export type TenantInsert = {
   id?: string
   owner_id: string
   business_name: string
@@ -123,7 +123,7 @@ export interface TenantInsert {
   updated_at?: string
 }
 
-export interface BusinessProfileInsert {
+export type BusinessProfileInsert = {
   id?: string
   tenant_id: string
   services?: Service[]
@@ -135,7 +135,7 @@ export interface BusinessProfileInsert {
   updated_at?: string
 }
 
-export interface ScheduleRuleInsert {
+export type ScheduleRuleInsert = {
   id?: string
   tenant_id: string
   day_of_week: number
@@ -148,7 +148,7 @@ export interface ScheduleRuleInsert {
   created_at?: string
 }
 
-export interface ScheduleOverrideInsert {
+export type ScheduleOverrideInsert = {
   id?: string
   tenant_id: string
   date: string
@@ -158,7 +158,7 @@ export interface ScheduleOverrideInsert {
   created_at?: string
 }
 
-export interface AppointmentInsert {
+export type AppointmentInsert = {
   id?: string
   tenant_id: string
   patient_name: string
@@ -173,7 +173,7 @@ export interface AppointmentInsert {
   updated_at?: string
 }
 
-export interface ConversationInsert {
+export type ConversationInsert = {
   id?: string
   tenant_id: string
   channel: 'phone' | 'chat'
@@ -201,39 +201,45 @@ export type ScheduleOverride = ScheduleOverrideRow
 export type Appointment = AppointmentRow
 export type Conversation = ConversationRow
 
-// Database interface for Supabase client typing
-export interface Database {
+// Database type for Supabase client typing
+export type Database = {
   public: {
     Tables: {
       tenants: {
         Row: TenantRow
         Insert: TenantInsert
         Update: TenantUpdate
+        Relationships: []
       }
       business_profiles: {
         Row: BusinessProfileRow
         Insert: BusinessProfileInsert
         Update: BusinessProfileUpdate
+        Relationships: []
       }
       schedule_rules: {
         Row: ScheduleRuleRow
         Insert: ScheduleRuleInsert
         Update: ScheduleRuleUpdate
+        Relationships: []
       }
       schedule_overrides: {
         Row: ScheduleOverrideRow
         Insert: ScheduleOverrideInsert
         Update: ScheduleOverrideUpdate
+        Relationships: []
       }
       appointments: {
         Row: AppointmentRow
         Insert: AppointmentInsert
         Update: AppointmentUpdate
+        Relationships: []
       }
       conversations: {
         Row: ConversationRow
         Insert: ConversationInsert
         Update: ConversationUpdate
+        Relationships: []
       }
     }
     Views: Record<string, never>
