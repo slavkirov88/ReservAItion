@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { generateSystemPrompt } from '@/lib/ai/prompt-generator'
 import { generateSlots } from '@/lib/scheduling/slot-generator'
+import { chatRateLimit, checkRateLimit } from '@/lib/rate-limit'
 import type { ScheduleRuleRow } from '@/types/database'
 import OpenAI from 'openai'
 import { addMinutes, parseISO, format } from 'date-fns'
@@ -35,8 +36,8 @@ export async function POST(
     sessionId?: string
   }
 
-  // Suppress unused variable warning
-  void sessionId
+  const rateLimitResponse = await checkRateLimit(chatRateLimit, sessionId || apiKey)
+  if (rateLimitResponse) return rateLimitResponse
 
   const supabase = await createServiceClient()
 
