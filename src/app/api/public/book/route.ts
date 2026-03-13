@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { bookRateLimit, checkRateLimit } from '@/lib/rate-limit'
 import { addMinutes, parseISO, format } from 'date-fns'
 
 export async function POST(request: Request) {
@@ -11,9 +10,6 @@ export async function POST(request: Request) {
     if (!api_key || !patient_name || !patient_phone || !service || !starts_at) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
-
-    const rateLimitResponse = await checkRateLimit(bookRateLimit, api_key as string)
-    if (rateLimitResponse) return rateLimitResponse
 
     const supabase = await createServiceClient()
 

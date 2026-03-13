@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { generateSlots } from '@/lib/scheduling/slot-generator'
-import { slotsRateLimit, checkRateLimit } from '@/lib/rate-limit'
 import type { ScheduleOverrideRow, ScheduleRuleRow } from '@/types/database'
 
 export async function GET(request: Request) {
@@ -12,9 +11,6 @@ export async function GET(request: Request) {
   if (!apiKey || !date) {
     return NextResponse.json({ error: 'api_key and date required' }, { status: 400 })
   }
-
-  const rateLimitResponse = await checkRateLimit(slotsRateLimit, apiKey)
-  if (rateLimitResponse) return rateLimitResponse
 
   const supabase = await createServiceClient()
 
