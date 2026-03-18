@@ -16,6 +16,7 @@ The platform operator (us) starts with white-glove manual setup (phase 1) to col
 
 | Component | Solution |
 |-----------|----------|
+| i18n | next-intl (Bulgarian default, English toggle) |
 | Framework | Next.js + React + TypeScript |
 | Database | Supabase PostgreSQL + RLS |
 | Auth | Supabase Auth |
@@ -337,9 +338,26 @@ Hotel plans live in `src/lib/stripe/hotel-plans.ts` as `HOTEL_PLANS` — separat
 
 ---
 
+## Dashboard i18n (Bulgarian / English)
+
+The dashboard UI is fully internationalised using **next-intl**.
+
+- **Default language:** Bulgarian (`bg`)
+- **Available languages:** Bulgarian + English (`en`)
+- **Toggle:** a `BG / EN` button in the top navigation bar, visible on every page, accessible to all users
+- **Persistence:** selected language stored in a cookie (`NEXT_LOCALE`); survives page refresh and re-login
+- **Scope:** all dashboard UI strings, onboarding wizard, error messages, email templates sent to hotel owners. Guest-facing invoice emails respect the hotel's configured guest language (not this toggle).
+- **Translation files:** `messages/bg.json` and `messages/en.json` — flat key-value structure, one file per language
+- **No URL-based locale prefix** (e.g. no `/bg/dashboard`) — the toggle switches locale in-place via cookie, keeping URLs clean
+
+This is a **Phase 1** deliverable — Bulgarian support ships with the initial hotel vertical.
+
+---
+
 ## Implementation Phases
 
 ### Phase 1 — Core hotel vertical (ship first)
+- **i18n setup:** `next-intl`, `messages/bg.json` + `messages/en.json`, `BG/EN` toggle in nav
 - `HOTEL_PLANS` constant in `src/lib/stripe/hotel-plans.ts`
 - DB schema migration: `business_type` + Notion columns on `tenants`; new tables `rooms`, `room_reservations`, `invoices`, `ical_blocks` with exclusion constraint
 - Room management CRUD + hotel dashboard pages
