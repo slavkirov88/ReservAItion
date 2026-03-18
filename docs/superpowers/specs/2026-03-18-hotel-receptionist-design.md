@@ -35,13 +35,18 @@ The platform operator (us) starts with white-glove manual setup (phase 1) to col
 
 **Vertical fork within the same codebase.** A `business_type` field on the `tenants` table (`'clinic' | 'hotel'`) gates all hotel-specific UI and logic. Shared infrastructure (Vapi integration, chat widget, Stripe billing, Supabase multi-tenant RLS, auth, Notion MCP) is reused unchanged. Hotel-specific logic lives in new, isolated modules.
 
+Hotel Stripe plans are defined in a new `HOTEL_PLANS` constant in `src/lib/stripe/hotel-plans.ts` (separate from the existing `PLANS` in `stripe.ts`) to avoid colliding with healthcare billing. The existing healthcare billing is untouched.
+
 ---
 
 ## Database Schema (new tables)
 
 ```sql
 -- Extend existing tenants table
-ALTER TABLE tenants ADD COLUMN business_type TEXT DEFAULT 'clinic';
+ALTER TABLE tenants
+  ADD COLUMN business_type TEXT DEFAULT 'clinic',
+  ADD COLUMN notion_access_token TEXT,   -- hotel's Notion OAuth token
+  ADD COLUMN notion_database_id TEXT;    -- hotel's guest CRM database ID
 -- 'clinic' | 'hotel'
 
 rooms
@@ -56,44 +61,63 @@ rooms
   ical_export_url TEXT          -- our generated iCal for export to OTAs
   created_at      TIMESTAMPTZ
 
+-- check_out is the departure date (exclusive bound).
+-- A guest checking out on the 10th and a guest checking in on the 10th do NOT conflict.
+-- All availability queries use the half-open interval [check_in, check_out).
 room_reservations
   id              UUID PK
   tenant_id       UUID → tenants
   room_id         UUID → rooms
   guest_name      TEXT
   guest_email     TEXT
-  guest_phone     TEXT
-  check_in        DATE
-  check_out       DATE
-  nights          INT
+  guest_phone     TEXT          -- required, collected by agent
+  check_in        DATE          -- inclusive arrival date
+  check_out       DATE          -- exclusive departure date
+  nights          INT GENERATED ALWAYS AS (check_out - check_in) STORED
   total_price     DECIMAL
   status          TEXT          -- 'on_hold' | 'confirmed' | 'cancelled'
-  invoice_id      UUID → invoices
-  held_until      TIMESTAMPTZ   -- created_at + 48h
+  invoice_id      UUID → invoices (nullable until invoice is created)
+  held_until      TIMESTAMPTZ   -- created_at + 48h; cron cancels after this
   source          TEXT          -- 'voice' | 'chat' | 'manual'
   created_at      TIMESTAMPTZ
 
+-- Exclusion constraint to prevent double-booking at the DB level:
+-- ALTER TABLE room_reservations
+--   ADD CONSTRAINT no_double_booking
+--   EXCLUDE USING gist (
+--     room_id WITH =,
+--     daterange(check_in, check_out, '[)') WITH &&
+--   )
+--   WHERE (status IN ('on_hold', 'confirmed'));
+--
+-- create_reservation must catch the resulting constraint violation and
+-- return a graceful "room just became unavailable" message to the agent.
+
+-- invoices is created FIRST; room_reservations.invoice_id is set after insert.
+-- invoices has NO back-reference FK to room_reservations to avoid circular dependency.
+-- The relationship is: room_reservations.invoice_id → invoices (one direction only).
 invoices
-  id              UUID PK
-  tenant_id       UUID → tenants
-  reservation_id  UUID → room_reservations
-  guest_email     TEXT
-  guest_phone     TEXT
-  amount          DECIMAL
-  currency        TEXT
-  pdf_url         TEXT
-  stripe_payment_link TEXT
-  status          TEXT          -- 'sent' | 'paid' | 'expired'
-  sent_at         TIMESTAMPTZ
-  expires_at      TIMESTAMPTZ   -- sent_at + 48h
-  paid_at         TIMESTAMPTZ
+  id                    UUID PK
+  tenant_id             UUID → tenants
+  guest_email           TEXT
+  guest_phone           TEXT
+  amount                DECIMAL
+  currency              TEXT
+  pdf_url               TEXT
+  stripe_payment_link   TEXT
+  stripe_event_id       TEXT     -- last processed Stripe event ID for idempotency
+  status                TEXT     -- 'sent' | 'paid' | 'expired'
+  sent_at               TIMESTAMPTZ
+  expires_at            TIMESTAMPTZ   -- sent_at + 48h
+  paid_at               TIMESTAMPTZ
 
 ical_blocks
   id          UUID PK
+  tenant_id   UUID → tenants    -- denormalised for RLS; matches rooms.tenant_id
   room_id     UUID → rooms
   source      TEXT              -- 'booking.com' | 'airbnb' | 'manual'
   start_date  DATE
-  end_date    DATE
+  end_date    DATE              -- exclusive (same convention as check_out)
   summary     TEXT              -- raw event title from iCal
   synced_at   TIMESTAMPTZ
 ```
@@ -116,33 +140,48 @@ Collects: check-in, check-out, number of guests, room preference
        ▼
 check_room_availability(check_in, check_out, guests)
   → queries rooms + room_reservations (on_hold/confirmed) + ical_blocks
+  → uses half-open interval [check_in, check_out) for overlap detection
   → returns available rooms with prices
        │
        ▼
 Agent presents options, confirms price with guest
        │
        ▼
-Collects: guest name, email, phone
+Collects: guest name, email, phone (all required)
        │
        ▼
 create_reservation(room_id, guest_details, dates)
-  → creates room_reservations (status='on_hold', held_until=now+48h)
-  → generates PDF invoice
-  → creates Stripe payment link
-  → sends invoice email via Resend
-  → updates iCal export
-  → creates Notion page in hotel's guest CRM
+  → BEGIN transaction
+  → INSERT into invoices first (returns invoice_id)
+  → INSERT into room_reservations with invoice_id (status='on_hold', held_until=now+48h)
+    -- DB exclusion constraint fires here if room just became unavailable
+    -- On constraint violation: rollback, agent says "room just became unavailable"
+  → COMMIT
+  → Generate PDF invoice (async)
+  → Create Stripe payment link
+  → Send invoice email via Resend
+  → Update iCal export
+  → Create Notion page in hotel's guest CRM (Phase 1: operator CRM only; hotel guest CRM in Phase 2)
        │
        ▼
 Agent confirms: "Invoice sent to [email]. Pay within 48 hours to secure your booking."
        │
-    ┌──┴──────────────┐
-  paid (Stripe webhook)   not paid (cron after 48h)
-    │                          │
-  status → confirmed        status → cancelled
-  Notion updated            Notion updated
-  iCal confirmed            iCal dates released
-  confirmation email        cancellation email to guest
+    ┌──┴──────────────────┐
+  paid (Stripe webhook)     not paid (cron after 48h)
+    │                            │
+  Webhook handler checks:      status → cancelled
+  - if invoices.status='paid'  Notion updated
+    already → return 200,      iCal dates released
+    exit (idempotent)          cancellation email to guest
+  - if invoices.status='expired'
+    (cron already cancelled) →
+    issue Stripe refund,
+    send "refund issued" email,
+    return 200
+  - else → status → confirmed
+    Notion updated
+    iCal confirmed
+    confirmation email
 ```
 
 ### Vapi tools (hotel vertical)
@@ -152,7 +191,14 @@ Agent confirms: "Invoice sent to [email]. Pay within 48 hours to secure your boo
 | `check_room_availability` | Query live DB + iCal blocks for available rooms |
 | `create_reservation` | Create on_hold reservation, generate invoice, send email |
 | `get_hotel_info` | FAQs, amenities, policies, check-in/out times, location |
-| `cancel_reservation` | Cancel by reference number, release dates |
+| `cancel_reservation` | Cancel by reference number — requires verification (see below) |
+
+### `cancel_reservation` verification
+Before executing cancellation, the agent must verify the caller's identity:
+1. Ask for reservation reference number
+2. Ask for the last 4 digits of the phone number used when booking
+
+Both must match a `room_reservations` row. On mismatch after 2 attempts, the agent declines and directs the guest to contact the hotel directly.
 
 ---
 
@@ -161,7 +207,8 @@ Agent confirms: "Invoice sent to [email]. Pay within 48 hours to secure your boo
 ### Import (blocking external dates)
 - Hotel pastes Booking.com / Airbnb iCal feed URL per room during setup
 - Supabase Edge Function cron runs every 30 minutes, fetches each `ical_url`, parses events, upserts into `ical_blocks`
-- `check_room_availability` combines `room_reservations` + `ical_blocks` to determine true availability
+- **Error isolation:** each room is processed independently. If a fetch returns non-200 or malformed iCal, that room is skipped and the error is logged; the cron continues with other rooms. `ical_blocks` for a room are only replaced on a successful fetch (stale blocks are preserved on failure).
+- `check_room_availability` combines `room_reservations` (on_hold + confirmed) + `ical_blocks` using the `[check_in, check_out)` half-open interval
 
 ### Export (blocking our dates on OTAs)
 - Public endpoint: `GET /api/public/ical/[roomId]`
@@ -183,19 +230,24 @@ Agent confirms: "Invoice sent to [email]. Pay within 48 hours to secure your boo
 - Subject: `"Your reservation at [Hotel Name] — Invoice #XXX — Pay within 48 hours"`
 
 ### Payment options
-- **Stripe payment link** (card, online) — primary
-- **Bank transfer** (IBAN) — secondary, for guests who prefer it
+- **Stripe payment link** (card, online) — primary; automated confirmation via webhook
+- **Bank transfer** (IBAN) — secondary. Bank transfer confirmations require **manual operator action** via the dashboard (operator marks invoice as paid). There is no automated webhook for bank transfers in Phase 1.
 
 ### Lifecycle
 - `sent` → guest receives email
-- `paid` → Stripe webhook `payment_intent.succeeded` triggers confirmation
-- `expired` → cron marks expired after 48h, triggers cancellation flow
+- `paid` → Stripe webhook `checkout.session.completed` triggers confirmation (Payment Links emit this event, not `payment_intent.succeeded`). The handler resolves the `invoices` row via metadata embedded in the payment link at creation time (`metadata.invoice_id`). It then fetches the associated `room_reservations` row via `SELECT * FROM room_reservations WHERE invoice_id = $invoice_id` — no back-reference FK needed. See idempotency rules in booking flow above.
+- `expired` → cron marks expired after 48h, triggers cancellation flow; if guest pays after expiry, automatic refund is issued
 
 ---
 
 ## Notion CRM (via MCP)
 
-### Hotel's Guest CRM (one Notion database per hotel tenant)
+### Authentication model
+- The platform uses a **single Notion MCP integration** (platform-level API key) for the **Operator CRM** — no per-tenant OAuth needed.
+- For **hotel guest CRMs**, each hotel connects their own Notion workspace via Notion OAuth during onboarding. Their `notion_access_token` and `notion_database_id` are stored on the `tenants` row. The MCP client is initialised per-request using the tenant's token.
+- **Phase 1 scope:** only the Operator CRM is implemented (platform-level, no per-tenant OAuth). Hotel guest CRM Notion sync is a **Phase 2** feature, dependent on the Notion OAuth connect flow.
+
+### Hotel's Guest CRM — Phase 2 (one Notion database per hotel tenant)
 Each reservation creates/updates a Notion page:
 
 | Field | Value |
@@ -212,9 +264,7 @@ Each reservation creates/updates a Notion page:
 | Invoice | Link to PDF |
 | Source | Voice / Chat / Manual |
 
-Hotel's `notion_database_id` stored in tenant settings. Connected via Notion OAuth during onboarding.
-
-### Operator CRM (platform owner's Notion)
+### Operator CRM — Phase 1 (platform owner's Notion, single integration)
 Each new hotel tenant creates a page:
 
 | Field | Value |
@@ -240,24 +290,24 @@ Triggered on: tenant signup, subscription change, setup status update.
 | Rooms | Room list, add/edit room, iCal URL input, sync status indicator |
 | Reservations | Calendar view + list, filter by status |
 | Guests | Guest history, searchable by name/email/phone |
-| Invoices | Invoice list, status, resend button, download PDF |
+| Invoices | Invoice list, status, resend button, download PDF, manual "mark as paid" for bank transfers |
 | AI Config | Welcome message, FAQs, pricing rules, language settings |
-| Settings | Stripe connect, Notion connect, email config, subscription |
+| Settings | Stripe connect, Notion connect (Phase 2), email config, subscription |
 
 ---
 
 ## Onboarding Wizard
 
 ### Phase 1 — White-glove (operator completes on behalf of hotel)
-5-step wizard you fill in after the hotel pays the setup fee:
+5-step wizard the operator fills in after the hotel pays the setup fee:
 1. **Hotel profile** — name, address, phone, languages (English + local)
 2. **Rooms setup** — add rooms: name, type, capacity, price, amenities
 3. **iCal sync** — paste Booking.com / Airbnb iCal URLs per room
-4. **Integrations** — connect Stripe (for guest payments) + Notion (guest CRM)
+4. **Integrations** — connect Stripe (for guest payments); Notion guest CRM skipped until Phase 2
 5. **AI config** — welcome message, FAQs, go live
 
 ### Phase 2 — Self-serve (hotel owner completes themselves)
-Same wizard, accessible after signup. "Request help" button on each step lets them upgrade to white-glove at any point.
+Same wizard, accessible after signup. "Request help" button on each step lets them upgrade to white-glove at any point. Adds Notion OAuth connect step.
 
 ---
 
@@ -265,21 +315,23 @@ Same wizard, accessible after signup. "Request help" button on each step lets th
 
 Separate view (gated to platform owner account):
 - List of all hotel tenants with subscription status, MRR, setup stage
-- Quick actions: view tenant, resend setup email, mark as configured
+- Quick actions: view tenant, resend setup email, mark as configured, manual invoice mark-as-paid
 - Revenue summary
 
 ---
 
 ## Pricing & Business Model
 
+Hotel plans live in `src/lib/stripe/hotel-plans.ts` as `HOTEL_PLANS` — separate from the existing healthcare `PLANS` in `stripe.ts`.
+
 | Plan | Price | Rooms | Notes |
 |------|-------|-------|-------|
 | Setup fee | €299 one-time | — | White-glove configuration by operator |
-| Starter | €79/month | Up to 10 | Voice + chat + Notion + invoices |
+| Starter | €79/month | Up to 10 | Voice + chat + invoices + operator Notion CRM |
 | Growth | €149/month | Up to 30 | + Priority support + custom widget branding |
 | Pro | €249/month | Unlimited | + Multi-property + dedicated onboarding |
 
-- 7-day free trial after go-live
+- **7-day free trial** starts when the operator marks the hotel as "Live" in the admin dashboard, which sets `trial_ends_at = now() + 7 days` on the tenant row (consistent with existing middleware check in `src/lib/supabase/middleware.ts`)
 - Setup fee collected via manual Stripe payment link (phase 1), via platform checkout (phase 2)
 - Monthly subscription via existing Stripe Subscription infrastructure
 
@@ -288,19 +340,21 @@ Separate view (gated to platform owner account):
 ## Implementation Phases
 
 ### Phase 1 — Core hotel vertical (ship first)
-- DB schema migration (rooms, room_reservations, invoices, ical_blocks)
+- `HOTEL_PLANS` constant in `src/lib/stripe/hotel-plans.ts`
+- DB schema migration: `business_type` + Notion columns on `tenants`; new tables `rooms`, `room_reservations`, `invoices`, `ical_blocks` with exclusion constraint
 - Room management CRUD + hotel dashboard pages
-- iCal import cron + export endpoint
-- Vapi tools: check_room_availability, create_reservation, get_hotel_info
-- Invoice PDF generation + Resend email
-- Stripe payment link integration + webhook handler
+- iCal import cron (per-room error isolation) + export endpoint
+- Vapi tools: `check_room_availability`, `create_reservation` (with race condition handling), `get_hotel_info`, `cancel_reservation` (with phone verification)
+- Invoice PDF generation (`@react-pdf/renderer`) + Resend email
+- Stripe payment link integration + idempotent webhook handler (with post-cancellation refund path)
 - 48h cron (expiry + cancellation flow)
-- Notion MCP: hotel guest CRM sync
-- Operator CRM Notion sync
+- **Notion: Operator CRM sync only** (platform-level MCP key)
+- Manual "mark as paid" for bank transfers in dashboard
 
 ### Phase 2 — Self-serve & polish
 - Self-serve onboarding wizard
-- Notion OAuth connect flow for hotels
+- Notion OAuth connect flow for hotel guest CRMs
+- Hotel guest Notion CRM sync
 - Operator admin dashboard
 - Custom widget branding
 - Multi-property support
