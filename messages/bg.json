@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "overview": "Преглед",
+    "rooms": "Стаи",
+    "reservations": "Резервации",
+    "guests": "Гости",
+    "invoices": "Фактури",
+    "settings": "Настройки",
+    "logout": "Изход"
+  },
+  "common": {
+    "save": "Запази",
+    "cancel": "Откажи",
+    "delete": "Изтрий",
+    "edit": "Редактирай",
+    "add": "Добави",
+    "loading": "Зареждане...",
+    "error": "Грешка",
+    "success": "Успешно"
+  }
+}

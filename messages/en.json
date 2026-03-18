@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "overview": "Overview",
+    "rooms": "Rooms",
+    "reservations": "Reservations",
+    "guests": "Guests",
+    "invoices": "Invoices",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  }
+}

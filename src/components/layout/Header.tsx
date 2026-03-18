@@ -8,10 +8,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { getLocale } from 'next-intl/server'
+import { LocaleToggle } from '@/components/layout/LocaleToggle'
 
 export async function Header() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const locale = await getLocale()
 
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? '??'
 
@@ -19,6 +22,7 @@ export async function Header() {
     <header className="h-14 border-b border-border bg-card flex items-center justify-between px-6">
       <div className="md:hidden" /> {/* Space for mobile menu button in layout */}
       <div className="flex-1" />
+      <LocaleToggle currentLocale={locale} />
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
