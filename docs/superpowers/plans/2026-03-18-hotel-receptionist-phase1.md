@@ -390,6 +390,9 @@ RETURNS INT LANGUAGE sql AS $$
   SELECT nextval('invoice_number_seq')::INT;
 $$;
 
+-- Add invoice_number column to invoices for reference-based lookups
+ALTER TABLE invoices ADD COLUMN invoice_number TEXT UNIQUE;
+
 -- iCal blocks (external calendar events blocking dates)
 CREATE TABLE ical_blocks (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1415,6 +1418,7 @@ export async function POST(
         currency: 'EUR',
         status: 'sent',
         expires_at: expiresAt,
+        invoice_number: invoiceNumber, // persisted immediately for reference-based cancel lookup
       })
       .select()
       .single()
@@ -1466,7 +1470,7 @@ export async function POST(
         metadata: { invoice_id: invoice.id, tenant_id: tenantId },
       })
       paymentLink = link.url
-      await supabase.from('invoices').update({ stripe_payment_link: paymentLink }).eq('id', invoice.id)
+      await supabase.from('invoices').update({ stripe_payment_link: paymentLink, invoice_number: invoiceNumber }).eq('id', invoice.id)
     } catch {
       // Non-fatal: invoice can still be paid via bank transfer
     }
@@ -1545,33 +1549,19 @@ export async function POST(
   if (toolName === 'cancel_reservation') {
     const { reference_number, phone_last4 } = parameters
 
-    // Step 1: Find the invoice by reference number (e.g. "INV-2026-0042")
-    // The invoice number is stored in the pdf_url or we match via sequence.
-    // Simplest: match on guest_phone last4 + the encoded invoice count from reference_number.
-    // Extract numeric part from reference_number: "INV-2026-0042" → 42
-    const seqMatch = String(reference_number).match(/(\d+)$/)
-    if (!seqMatch) {
-      return NextResponse.json({ result: 'Невалиден референтен номер. Моля проверете фактурата.' })
-    }
-
-    // Find reservations for this tenant that match BOTH conditions:
-    // 1. phone ends with phone_last4
-    // 2. are on_hold or confirmed (can only cancel active ones)
+    // Verify BOTH reference_number (invoice_number column) AND phone_last4.
+    // Join through invoices so a caller must know the exact reference AND phone suffix.
     const { data: reservations } = await supabase
       .from('room_reservations')
-      .select('id, status, guest_phone')
+      .select('id, status, guest_phone, invoices!inner(invoice_number)')
       .eq('tenant_id', tenantId)
       .in('status', ['on_hold', 'confirmed'])
+      .eq('invoices.invoice_number', reference_number)
 
     const match = (reservations ?? []).find(r => {
       const phone = r.guest_phone ?? ''
-      // Verify BOTH reference number sequence and phone last 4
-      return phone.slice(-4) === phone_last4 && String(reference_number).length > 0
+      return phone.slice(-4) === phone_last4
     })
-
-    // Note: for tighter security in production, store the invoice number in a
-    // dedicated column on room_reservations and query directly. For Phase 1 this
-    // phone-last4 + reference-present check is sufficient given the spec requirement.
 
     if (!match) {
       return NextResponse.json({ result: 'Резервацията не е намерена. Моля проверете референтния номер и последните 4 цифри от телефона.' })
