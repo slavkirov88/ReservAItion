@@ -39,6 +39,9 @@ export type TenantRow = {
   trial_ends_at: string
   created_at: string
   updated_at: string
+  business_type: string
+  notion_access_token: string | null
+  notion_database_id: string | null
 }
 
 export type BusinessProfileRow = {
@@ -121,6 +124,9 @@ export type TenantInsert = {
   trial_ends_at?: string
   created_at?: string
   updated_at?: string
+  business_type?: string
+  notion_access_token?: string | null
+  notion_database_id?: string | null
 }
 
 export type BusinessProfileInsert = {
@@ -241,9 +247,103 @@ export type Database = {
         Update: ConversationUpdate
         Relationships: []
       }
+      rooms: {
+        Row: RoomRow
+        Insert: RoomInsert
+        Update: RoomUpdate
+        Relationships: []
+      }
+      room_reservations: {
+        Row: RoomReservationRow
+        Insert: RoomReservationInsert
+        Update: RoomReservationUpdate
+        Relationships: []
+      }
+      invoices: {
+        Row: InvoiceRow
+        Insert: InvoiceInsert
+        Update: InvoiceUpdate
+        Relationships: []
+      }
+      ical_blocks: {
+        Row: IcalBlockRow
+        Insert: IcalBlockInsert
+        Update: Partial<Omit<IcalBlockInsert, 'id'>>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
     Enums: Record<string, never>
   }
 }
+
+// ─── Hotel domain types ────────────────────────────────────────────
+
+export type RoomRow = {
+  id: string
+  tenant_id: string
+  name: string
+  type: 'single' | 'double' | 'suite' | 'apartment'
+  capacity: number
+  base_price: number
+  amenities: string[]
+  ical_url: string | null
+  ical_export_url: string | null
+  created_at: string
+}
+
+export type RoomReservationRow = {
+  id: string
+  tenant_id: string
+  room_id: string
+  guest_name: string
+  guest_email: string
+  guest_phone: string
+  check_in: string
+  check_out: string
+  nights: number
+  total_price: number
+  status: 'on_hold' | 'confirmed' | 'cancelled'
+  invoice_id: string | null
+  held_until: string
+  source: 'voice' | 'chat' | 'manual'
+  created_at: string
+}
+
+export type InvoiceRow = {
+  id: string
+  tenant_id: string
+  guest_email: string
+  guest_phone: string
+  amount: number
+  currency: string
+  pdf_url: string | null
+  stripe_payment_link: string | null
+  stripe_event_id: string | null
+  invoice_number: string | null
+  status: 'sent' | 'paid' | 'expired'
+  sent_at: string
+  expires_at: string
+  paid_at: string | null
+}
+
+export type IcalBlockRow = {
+  id: string
+  tenant_id: string
+  room_id: string
+  source: string
+  start_date: string
+  end_date: string
+  summary: string | null
+  synced_at: string
+}
+
+export type RoomInsert = Omit<RoomRow, 'id' | 'created_at'> & { id?: string }
+export type RoomReservationInsert = Omit<RoomReservationRow, 'id' | 'nights' | 'created_at'> & { id?: string }
+export type InvoiceInsert = Omit<InvoiceRow, 'id'> & { id?: string }
+export type IcalBlockInsert = Omit<IcalBlockRow, 'id'> & { id?: string }
+
+export type RoomUpdate = Partial<RoomInsert>
+export type RoomReservationUpdate = Partial<Omit<RoomReservationInsert, 'tenant_id' | 'room_id'>>
+export type InvoiceUpdate = Partial<Omit<InvoiceInsert, 'tenant_id'>>
