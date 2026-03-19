@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import type { TenantInsert, TenantRow, BusinessProfileInsert, ScheduleRuleInsert } from '@/types/database'
+import { upsertOperatorCRMEntry } from '@/lib/hotel/notion'
 
 export async function POST(request: Request) {
   try {
@@ -43,6 +44,18 @@ export async function POST(request: Request) {
     }
     if (!tenant) {
       throw new Error('Failed to create tenant')
+    }
+
+    // 1b. Sync hotel tenants to Notion CRM
+    if (tenant.business_type === 'hotel') {
+      await upsertOperatorCRMEntry({
+        hotelName: tenant.business_name,
+        ownerEmail: user.email ?? '',
+        setupStatus: 'Pending',
+        subscriptionStatus: 'trial',
+        mrr: 0,
+        tenantId: tenant.id,
+      }).catch(() => {}) // non-fatal
     }
 
     // 2. Create business profile
