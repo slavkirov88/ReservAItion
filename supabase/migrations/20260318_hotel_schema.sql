@@ -82,8 +82,8 @@ CREATE SEQUENCE invoice_number_seq START 1;
 
 -- RPC to get next invoice number (safe for concurrent calls)
 CREATE OR REPLACE FUNCTION next_invoice_number()
-RETURNS INT LANGUAGE sql AS $$
-  SELECT nextval('invoice_number_seq')::INT;
+RETURNS BIGINT LANGUAGE sql AS $$
+  SELECT nextval('invoice_number_seq');
 $$;
 
 -- Add invoice_number column to invoices for reference-based lookups

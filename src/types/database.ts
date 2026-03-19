@@ -207,77 +207,6 @@ export type ScheduleOverride = ScheduleOverrideRow
 export type Appointment = AppointmentRow
 export type Conversation = ConversationRow
 
-// Database type for Supabase client typing
-export type Database = {
-  public: {
-    Tables: {
-      tenants: {
-        Row: TenantRow
-        Insert: TenantInsert
-        Update: TenantUpdate
-        Relationships: []
-      }
-      business_profiles: {
-        Row: BusinessProfileRow
-        Insert: BusinessProfileInsert
-        Update: BusinessProfileUpdate
-        Relationships: []
-      }
-      schedule_rules: {
-        Row: ScheduleRuleRow
-        Insert: ScheduleRuleInsert
-        Update: ScheduleRuleUpdate
-        Relationships: []
-      }
-      schedule_overrides: {
-        Row: ScheduleOverrideRow
-        Insert: ScheduleOverrideInsert
-        Update: ScheduleOverrideUpdate
-        Relationships: []
-      }
-      appointments: {
-        Row: AppointmentRow
-        Insert: AppointmentInsert
-        Update: AppointmentUpdate
-        Relationships: []
-      }
-      conversations: {
-        Row: ConversationRow
-        Insert: ConversationInsert
-        Update: ConversationUpdate
-        Relationships: []
-      }
-      rooms: {
-        Row: RoomRow
-        Insert: RoomInsert
-        Update: RoomUpdate
-        Relationships: []
-      }
-      room_reservations: {
-        Row: RoomReservationRow
-        Insert: RoomReservationInsert
-        Update: RoomReservationUpdate
-        Relationships: []
-      }
-      invoices: {
-        Row: InvoiceRow
-        Insert: InvoiceInsert
-        Update: InvoiceUpdate
-        Relationships: []
-      }
-      ical_blocks: {
-        Row: IcalBlockRow
-        Insert: IcalBlockInsert
-        Update: Partial<Omit<IcalBlockInsert, 'id'>>
-        Relationships: []
-      }
-    }
-    Views: Record<string, never>
-    Functions: Record<string, never>
-    Enums: Record<string, never>
-  }
-}
-
 // ─── Hotel domain types ────────────────────────────────────────────
 
 export type RoomRow = {
@@ -341,9 +270,81 @@ export type IcalBlockRow = {
 
 export type RoomInsert = Omit<RoomRow, 'id' | 'created_at'> & { id?: string }
 export type RoomReservationInsert = Omit<RoomReservationRow, 'id' | 'nights' | 'created_at'> & { id?: string }
-export type InvoiceInsert = Omit<InvoiceRow, 'id'> & { id?: string }
+export type InvoiceInsert = Omit<InvoiceRow, 'id' | 'sent_at'> & { id?: string; sent_at?: string }
 export type IcalBlockInsert = Omit<IcalBlockRow, 'id'> & { id?: string }
 
 export type RoomUpdate = Partial<RoomInsert>
 export type RoomReservationUpdate = Partial<Omit<RoomReservationInsert, 'tenant_id' | 'room_id'>>
 export type InvoiceUpdate = Partial<Omit<InvoiceInsert, 'tenant_id'>>
+export type IcalBlockUpdate = Partial<Omit<IcalBlockInsert, 'id'>>
+
+// Database type for Supabase client typing
+export type Database = {
+  public: {
+    Tables: {
+      tenants: {
+        Row: TenantRow
+        Insert: TenantInsert
+        Update: TenantUpdate
+        Relationships: []
+      }
+      business_profiles: {
+        Row: BusinessProfileRow
+        Insert: BusinessProfileInsert
+        Update: BusinessProfileUpdate
+        Relationships: []
+      }
+      schedule_rules: {
+        Row: ScheduleRuleRow
+        Insert: ScheduleRuleInsert
+        Update: ScheduleRuleUpdate
+        Relationships: []
+      }
+      schedule_overrides: {
+        Row: ScheduleOverrideRow
+        Insert: ScheduleOverrideInsert
+        Update: ScheduleOverrideUpdate
+        Relationships: []
+      }
+      appointments: {
+        Row: AppointmentRow
+        Insert: AppointmentInsert
+        Update: AppointmentUpdate
+        Relationships: []
+      }
+      conversations: {
+        Row: ConversationRow
+        Insert: ConversationInsert
+        Update: ConversationUpdate
+        Relationships: []
+      }
+      rooms: {
+        Row: RoomRow
+        Insert: RoomInsert
+        Update: RoomUpdate
+        Relationships: []
+      }
+      room_reservations: {
+        Row: RoomReservationRow
+        Insert: RoomReservationInsert
+        Update: RoomReservationUpdate
+        Relationships: []
+      }
+      invoices: {
+        Row: InvoiceRow
+        Insert: InvoiceInsert
+        Update: InvoiceUpdate
+        Relationships: []
+      }
+      ical_blocks: {
+        Row: IcalBlockRow
+        Insert: IcalBlockInsert
+        Update: IcalBlockUpdate
+        Relationships: []
+      }
+    }
+    Views: Record<string, never>
+    Functions: Record<string, never>
+    Enums: Record<string, never>
+  }
+}
