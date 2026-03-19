@@ -39,7 +39,7 @@ export type TenantRow = {
   trial_ends_at: string
   created_at: string
   updated_at: string
-  business_type: string
+  business_type: 'clinic' | 'hotel'
   notion_access_token: string | null
   notion_database_id: string | null
 }
@@ -124,7 +124,7 @@ export type TenantInsert = {
   trial_ends_at?: string
   created_at?: string
   updated_at?: string
-  business_type?: string
+  business_type?: 'clinic' | 'hotel'
   notion_access_token?: string | null
   notion_database_id?: string | null
 }
@@ -271,7 +271,7 @@ export type IcalBlockRow = {
 export type RoomInsert = Omit<RoomRow, 'id' | 'created_at'> & { id?: string }
 export type RoomReservationInsert = Omit<RoomReservationRow, 'id' | 'nights' | 'created_at'> & { id?: string }
 export type InvoiceInsert = Omit<InvoiceRow, 'id' | 'sent_at'> & { id?: string; sent_at?: string }
-export type IcalBlockInsert = Omit<IcalBlockRow, 'id'> & { id?: string }
+export type IcalBlockInsert = Omit<IcalBlockRow, 'id' | 'synced_at'> & { id?: string; synced_at?: string }
 
 export type RoomUpdate = Partial<RoomInsert>
 export type RoomReservationUpdate = Partial<Omit<RoomReservationInsert, 'tenant_id' | 'room_id'>>
@@ -344,7 +344,12 @@ export type Database = {
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      next_invoice_number: {
+        Args: Record<string, never>
+        Returns: number
+      }
+    }
     Enums: Record<string, never>
   }
 }

@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 -- Extend tenants
 ALTER TABLE tenants
-  ADD COLUMN IF NOT EXISTS business_type TEXT NOT NULL DEFAULT 'clinic',
+  ADD COLUMN IF NOT EXISTS business_type TEXT NOT NULL DEFAULT 'clinic' CHECK (business_type IN ('clinic', 'hotel')),
   ADD COLUMN IF NOT EXISTS notion_access_token TEXT,
   ADD COLUMN IF NOT EXISTS notion_database_id TEXT;
 
@@ -22,7 +22,8 @@ CREATE TABLE rooms (
 );
 ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "tenant_isolation" ON rooms
-  USING (tenant_id = (SELECT id FROM tenants WHERE owner_id = auth.uid()));
+  USING (tenant_id IN (SELECT id FROM tenants WHERE owner_id = auth.uid()))
+  WITH CHECK (tenant_id IN (SELECT id FROM tenants WHERE owner_id = auth.uid()));
 
 -- Invoices (created before reservations to avoid circular FK)
 CREATE TABLE invoices (
@@ -42,7 +43,8 @@ CREATE TABLE invoices (
 );
 ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "tenant_isolation" ON invoices
-  USING (tenant_id = (SELECT id FROM tenants WHERE owner_id = auth.uid()));
+  USING (tenant_id IN (SELECT id FROM tenants WHERE owner_id = auth.uid()))
+  WITH CHECK (tenant_id IN (SELECT id FROM tenants WHERE owner_id = auth.uid()));
 
 -- Room reservations
 CREATE TABLE room_reservations (
@@ -75,7 +77,8 @@ ALTER TABLE room_reservations
 
 ALTER TABLE room_reservations ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "tenant_isolation" ON room_reservations
-  USING (tenant_id = (SELECT id FROM tenants WHERE owner_id = auth.uid()));
+  USING (tenant_id IN (SELECT id FROM tenants WHERE owner_id = auth.uid()))
+  WITH CHECK (tenant_id IN (SELECT id FROM tenants WHERE owner_id = auth.uid()));
 
 -- Invoice sequence for collision-free invoice numbers
 CREATE SEQUENCE invoice_number_seq START 1;
@@ -102,4 +105,12 @@ CREATE TABLE ical_blocks (
 );
 ALTER TABLE ical_blocks ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "tenant_isolation" ON ical_blocks
-  USING (tenant_id = (SELECT id FROM tenants WHERE owner_id = auth.uid()));
+  USING (tenant_id IN (SELECT id FROM tenants WHERE owner_id = auth.uid()))
+  WITH CHECK (tenant_id IN (SELECT id FROM tenants WHERE owner_id = auth.uid()));
+
+-- Performance indexes
+CREATE INDEX idx_rooms_tenant ON rooms(tenant_id);
+CREATE INDEX idx_room_reservations_tenant ON room_reservations(tenant_id, check_in);
+CREATE INDEX idx_room_reservations_room ON room_reservations(room_id, status);
+CREATE INDEX idx_invoices_tenant ON invoices(tenant_id, status);
+CREATE INDEX idx_ical_blocks_room ON ical_blocks(room_id, synced_at);
