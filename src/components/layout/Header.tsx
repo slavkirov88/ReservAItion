@@ -8,13 +8,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { getLocale } from 'next-intl/server'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { LocaleToggle } from '@/components/layout/LocaleToggle'
 
 export async function Header() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const locale = await getLocale()
+  const t = await getTranslations('nav')
 
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? '??'
 
@@ -41,7 +42,7 @@ export async function Header() {
             <DropdownMenuItem
               render={<button type="submit" className="w-full cursor-pointer" />}
             >
-              Изход
+              {t('logout')}
             </DropdownMenuItem>
           </form>
         </DropdownMenuContent>
