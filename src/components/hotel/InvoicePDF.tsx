@@ -1,24 +1,7 @@
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import type { InvoiceEmailData } from '@/types/hotel'
 
-export interface InvoicePDFProps {
-  invoiceNumber: string
-  hotelName: string
-  hotelAddress: string
-  hotelLogo?: string
-  guestName: string
-  guestEmail: string
-  guestPhone: string
-  roomName: string
-  checkIn: string
-  checkOut: string
-  nights: number
-  pricePerNight: number
-  totalPrice: number
-  currency: string
-  stripePaymentLink: string
-  iban?: string
-  expiresAt: string
-}
+type InvoicePDFProps = InvoiceEmailData
 
 const styles = StyleSheet.create({
   page: { padding: 40, fontFamily: 'Helvetica', fontSize: 11 },
