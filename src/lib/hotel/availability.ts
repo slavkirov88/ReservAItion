@@ -60,16 +60,18 @@ export async function checkRoomAvailability(
   const available = []
 
   for (const room of rooms) {
-    const { data: reservations } = await supabase
+    const { data: reservations, error: resErr } = await supabase
       .from('room_reservations')
       .select('check_in, check_out')
       .eq('room_id', room.id)
       .in('status', ['on_hold', 'confirmed'])
+    if (resErr) throw new Error(`Failed to fetch reservations for room ${room.id}: ${resErr.message}`)
 
-    const { data: icalBlocks } = await supabase
+    const { data: icalBlocks, error: icalErr } = await supabase
       .from('ical_blocks')
       .select('start_date, end_date')
       .eq('room_id', room.id)
+    if (icalErr) throw new Error(`Failed to fetch iCal blocks for room ${room.id}: ${icalErr.message}`)
 
     const blocked = buildBlockedRanges(reservations ?? [], icalBlocks ?? [])
 
