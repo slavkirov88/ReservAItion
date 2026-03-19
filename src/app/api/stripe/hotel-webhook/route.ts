@@ -43,14 +43,18 @@ export async function POST(request: Request) {
   // Expired — cron already cancelled; refund and notify
   if (invoice.status === 'expired') {
     try {
-      await stripe.refunds.create({ payment_intent: session.payment_intent as string })
-      const { error: refundEmailError } = await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL ?? 'noreply@hotelai.app',
-        to: invoice.guest_email,
-        subject: 'Резервацията е изтекла — възстановяване на плащане',
-        html: `<p>Съжаляваме, но резервационният период от 48 часа е изтекъл. Вашето плащане ще бъде възстановено в рамките на 5-7 работни дни.</p>`,
-      })
-      if (refundEmailError) console.error('Refund email failed:', refundEmailError.message)
+      if (!session.payment_intent) {
+        console.error('No payment_intent on expired session — skipping refund')
+      } else {
+        await stripe.refunds.create({ payment_intent: session.payment_intent as string })
+        const { error: refundEmailError } = await resend.emails.send({
+          from: process.env.RESEND_FROM_EMAIL ?? 'noreply@hotelai.app',
+          to: invoice.guest_email,
+          subject: 'Резервацията е изтекла — възстановяване на плащане',
+          html: `<p>Съжаляваме, но резервационният период от 48 часа е изтекъл. Вашето плащане ще бъде възстановено в рамките на 5-7 работни дни.</p>`,
+        })
+        if (refundEmailError) console.error('Refund email failed:', refundEmailError.message)
+      }
     } catch (err) {
       console.error('Refund flow error:', err)
     }
@@ -63,14 +67,16 @@ export async function POST(request: Request) {
   }
 
   // Confirm reservation
-  await supabase.from('invoices').update({
+  const { error: invErr } = await supabase.from('invoices').update({
     status: 'paid',
     paid_at: new Date().toISOString(),
     stripe_event_id: event.id,
   }).eq('id', invoiceId)
+  if (invErr) return NextResponse.json({ error: 'DB error' }, { status: 500 })
 
-  await supabase.from('room_reservations').update({ status: 'confirmed' })
+  const { error: resErr } = await supabase.from('room_reservations').update({ status: 'confirmed' })
     .eq('invoice_id', invoiceId)
+  if (resErr) return NextResponse.json({ error: 'DB error' }, { status: 500 })
 
   // Send confirmation email
   const { error: confirmEmailError } = await resend.emails.send({

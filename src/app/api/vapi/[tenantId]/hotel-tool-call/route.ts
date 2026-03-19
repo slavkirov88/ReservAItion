@@ -80,9 +80,16 @@ export async function POST(
       .eq('id', tenantId)
       .single()
 
+    const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+    if (!ISO_DATE.test(check_in) || !ISO_DATE.test(check_out)) {
+      return NextResponse.json({ result: 'Невалидни дати. Моля използвайте формат ГГГГ-ММ-ДД.' })
+    }
     const nights = Math.round(
       (new Date(check_out).getTime() - new Date(check_in).getTime()) / 86400000
     )
+    if (nights < 1) {
+      return NextResponse.json({ result: 'Датата на напускане трябва да е след датата на настаняване.' })
+    }
     const totalPrice = room.base_price * nights
     const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
 
@@ -222,7 +229,7 @@ export async function POST(
 
     const { data: reservations } = await supabase
       .from('room_reservations')
-      .select('id, status, guest_phone, invoices!inner(invoice_number)')
+      .select('id, status, guest_phone, invoice_id, invoices!inner(invoice_number)')
       .eq('tenant_id', tenantId)
       .in('status', ['on_hold', 'confirmed'])
       .eq('invoices.invoice_number', reference_number)
@@ -240,6 +247,14 @@ export async function POST(
       .from('room_reservations')
       .update({ status: 'cancelled' })
       .eq('id', match.id)
+
+    // Also cancel the linked invoice to prevent the payment link from being used
+    if (match.invoice_id) {
+      await supabase
+        .from('invoices')
+        .update({ status: 'expired' })
+        .eq('id', match.invoice_id)
+    }
 
     return NextResponse.json({ result: 'Резервацията е отменена успешно.' })
   }
