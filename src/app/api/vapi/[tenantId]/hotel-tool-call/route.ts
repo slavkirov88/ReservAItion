@@ -20,7 +20,10 @@ export async function POST(
   const signature = request.headers.get('x-vapi-signature')
   const body = await request.text()
 
-  if (process.env.VAPI_WEBHOOK_SECRET && signature) {
+  if (process.env.VAPI_WEBHOOK_SECRET) {
+    if (!signature) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     const expected = crypto
       .createHmac('sha256', process.env.VAPI_WEBHOOK_SECRET)
       .update(body).digest('hex')
