@@ -8,12 +8,18 @@ export function LocaleToggle({ currentLocale }: { currentLocale: string }) {
 
   function switchLocale(locale: string) {
     startTransition(async () => {
-      await fetch('/api/locale', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ locale }),
-      })
-      window.location.reload()
+      try {
+        const response = await fetch('/api/locale', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ locale }),
+        })
+        if (response.ok) {
+          window.location.reload()
+        }
+      } catch {
+        // Network error — silently ignore, locale unchanged
+      }
     })
   }
 
