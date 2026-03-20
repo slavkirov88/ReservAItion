@@ -1,7 +1,12 @@
 import { Client } from '@notionhq/client'
 
-const notion = new Client({ auth: process.env.NOTION_API_KEY })
 const OPERATOR_DB_ID = process.env.NOTION_OPERATOR_DATABASE_ID ?? ''
+
+// Lazy init — avoids throwing at module load when NOTION_API_KEY is not set
+function getNotionClient(): Client {
+  if (!process.env.NOTION_API_KEY) throw new Error('NOTION_API_KEY is not set')
+  return new Client({ auth: process.env.NOTION_API_KEY })
+}
 
 export interface OperatorCRMEntry {
   hotelName: string
@@ -14,7 +19,9 @@ export interface OperatorCRMEntry {
 }
 
 export async function upsertOperatorCRMEntry(entry: OperatorCRMEntry): Promise<void> {
-  if (!OPERATOR_DB_ID) return
+  if (!OPERATOR_DB_ID || !process.env.NOTION_API_KEY) return
+
+  const notion = getNotionClient()
 
   // Check if page already exists for this tenant
   const existing = await notion.databases.query({
