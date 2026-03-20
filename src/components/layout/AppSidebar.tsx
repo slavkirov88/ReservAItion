@@ -11,11 +11,15 @@ import {
   CreditCard,
   Bot,
   Menu,
+  Hotel,
+  BedDouble,
+  BookOpen,
+  Receipt,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 
-const navItems = [
+const clinicNavItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/calendar', label: 'Календар', icon: Calendar },
   { href: '/appointments', label: 'Часове', icon: ClipboardList },
@@ -23,8 +27,18 @@ const navItems = [
   { href: '/subscription', label: 'Абонамент', icon: CreditCard },
 ]
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+const hotelNavItems = [
+  { href: '/hotel', label: 'Преглед', icon: Hotel },
+  { href: '/hotel/rooms', label: 'Стаи', icon: BedDouble },
+  { href: '/hotel/reservations', label: 'Резервации', icon: BookOpen },
+  { href: '/hotel/invoices', label: 'Фактури', icon: Receipt },
+  { href: '/settings/profile', label: 'Настройки', icon: Settings },
+  { href: '/subscription', label: 'Абонамент', icon: CreditCard },
+]
+
+function NavLinks({ businessType, onNavigate }: { businessType: string; onNavigate?: () => void }) {
   const pathname = usePathname()
+  const navItems = businessType === 'hotel' ? hotelNavItems : clinicNavItems
   return (
     <nav className="flex flex-col gap-1 p-4">
       {navItems.map(({ href, label, icon: Icon }) => (
@@ -47,24 +61,28 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
-function SidebarContent() {
+function SidebarContent({ businessType }: { businessType: string }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 px-6 py-5 border-b border-border">
         <Bot className="h-6 w-6 text-primary" />
         <span className="font-semibold text-lg">ReceptAI</span>
       </div>
-      <NavLinks />
+      <NavLinks businessType={businessType} />
     </div>
   )
 }
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  businessType: string
+}
+
+export function AppSidebar({ businessType }: AppSidebarProps) {
   return (
     <>
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card h-screen sticky top-0">
-        <SidebarContent />
+        <SidebarContent businessType={businessType} />
       </aside>
 
       {/* Mobile sidebar */}
@@ -77,7 +95,7 @@ export function AppSidebar() {
           <Menu className="h-5 w-5" />
         </SheetTrigger>
         <SheetContent side="left" className="w-64 p-0">
-          <SidebarContent />
+          <SidebarContent businessType={businessType} />
         </SheetContent>
       </Sheet>
     </>
