@@ -26,8 +26,13 @@ export function RoomForm({ room, onSuccess, onCancel }: RoomFormProps) {
     const body = { name, type, capacity, base_price: basePrice, ical_url: icalUrl || null }
     const url = room ? `/api/hotel/rooms/${room.id}` : '/api/hotel/rooms'
     const method = room ? 'PUT' : 'POST'
-    await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     setLoading(false)
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Unknown error' }))
+      alert(err.error ?? 'Грешка при запазване')
+      return
+    }
     onSuccess()
   }
 

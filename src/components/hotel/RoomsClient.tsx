@@ -22,6 +22,7 @@ export function RoomsClient({ initialRooms }: RoomsClientProps) {
   const [rooms, setRooms] = useState<RoomRow[]>(initialRooms)
   const [showForm, setShowForm] = useState(false)
   const [editRoom, setEditRoom] = useState<RoomRow | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   async function fetchRooms() {
     const res = await fetch('/api/hotel/rooms')
@@ -32,8 +33,10 @@ export function RoomsClient({ initialRooms }: RoomsClientProps) {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Изтриване на стаята?')) return
+    if (!window.confirm('Сигурни ли сте?')) return
+    setDeletingId(id)
     await fetch(`/api/hotel/rooms/${id}`, { method: 'DELETE' })
+    setDeletingId(null)
     await fetchRooms()
   }
 
@@ -88,7 +91,7 @@ export function RoomsClient({ initialRooms }: RoomsClientProps) {
                   )}
                   <div className="flex gap-2 pt-2">
                     <Button size="sm" variant="outline" onClick={() => setEditRoom(room)}>Редактирай</Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(room.id)}>Изтрий</Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(room.id)} disabled={deletingId === room.id}>Изтрий</Button>
                   </div>
                 </CardContent>
               </>

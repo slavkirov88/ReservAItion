@@ -9,6 +9,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import type { RoomReservationRow } from '@/types/database'
 
 type ReservationWithRoom = RoomReservationRow & { rooms: { name: string; type: string } | null }
@@ -41,12 +42,13 @@ export function ReservationTable({ reservations }: ReservationTableProps) {
           <TableHead>Нощи</TableHead>
           <TableHead>Сума</TableHead>
           <TableHead>Статус</TableHead>
+          <TableHead>Действия</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {reservations.length === 0 && (
           <TableRow>
-            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+            <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
               Няма резервации.
             </TableCell>
           </TableRow>
@@ -66,6 +68,24 @@ export function ReservationTable({ reservations }: ReservationTableProps) {
               <Badge variant={statusVariants[r.status] ?? 'outline'}>
                 {statusLabels[r.status] ?? r.status}
               </Badge>
+            </TableCell>
+            <TableCell>
+              {r.status === 'on_hold' && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={async () => {
+                    await fetch(`/api/hotel/reservations/${r.id}`, {
+                      method: 'PATCH',
+                      body: JSON.stringify({ status: 'confirmed' }),
+                      headers: { 'Content-Type': 'application/json' },
+                    })
+                    window.location.reload()
+                  }}
+                >
+                  Потвърди
+                </Button>
+              )}
             </TableCell>
           </TableRow>
         ))}
