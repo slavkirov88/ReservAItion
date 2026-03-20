@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation'
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard'
 import { HotelOnboardingWizard } from '@/components/onboarding/HotelOnboardingWizard'
 import { createClient } from '@/lib/supabase/server'
@@ -10,10 +11,15 @@ export default async function OnboardingPage() {
   if (user) {
     const { data: tenant } = await supabase
       .from('tenants')
-      .select('business_type')
+      .select('business_type, vapi_assistant_id')
       .eq('owner_id', user.id)
       .single()
     businessType = tenant?.business_type ?? null
+
+    // Hotel tenants who have already completed onboarding go to dashboard
+    if (tenant?.business_type === 'hotel' && tenant.vapi_assistant_id) {
+      redirect('/hotel')
+    }
   }
 
   const isHotel = businessType === 'hotel'

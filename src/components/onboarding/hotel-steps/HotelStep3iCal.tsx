@@ -21,6 +21,7 @@ export function HotelStep3iCal({ onNext, onBack }: HotelStep3iCalProps) {
   const [icalUrls, setIcalUrls] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState<Record<string, boolean>>({})
   const [saved, setSaved] = useState<Record<string, boolean>>({})
+  const [saveError, setSaveError] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
 
   const fetchRooms = useCallback(async () => {
@@ -45,14 +46,20 @@ export function HotelStep3iCal({ onNext, onBack }: HotelStep3iCalProps) {
 
   async function saveIcal(roomId: string) {
     setSaving(prev => ({ ...prev, [roomId]: true }))
+    setSaveError(prev => ({ ...prev, [roomId]: '' }))
     try {
-      await fetch(`/api/hotel/rooms/${roomId}`, {
+      const response = await fetch(`/api/hotel/rooms/${roomId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ical_url: icalUrls[roomId] || null }),
       })
-      setSaved(prev => ({ ...prev, [roomId]: true }))
-      setTimeout(() => setSaved(prev => ({ ...prev, [roomId]: false })), 2000)
+      if (!response.ok) {
+        const json = await response.json().catch(() => ({ error: 'Unknown error' }))
+        setSaveError(prev => ({ ...prev, [roomId]: (json as { error?: string }).error ?? 'Грешка при запазване' }))
+      } else {
+        setSaved(prev => ({ ...prev, [roomId]: true }))
+        setTimeout(() => setSaved(prev => ({ ...prev, [roomId]: false })), 2000)
+      }
     } finally {
       setSaving(prev => ({ ...prev, [roomId]: false }))
     }
@@ -88,6 +95,9 @@ export function HotelStep3iCal({ onNext, onBack }: HotelStep3iCalProps) {
                   {saved[room.id] ? 'Запазено ✓' : saving[room.id] ? 'Запазване...' : 'Запази'}
                 </Button>
               </div>
+              {saveError[room.id] && (
+                <p className="text-destructive text-sm">{saveError[room.id]}</p>
+              )}
             </div>
           ))}
         </div>

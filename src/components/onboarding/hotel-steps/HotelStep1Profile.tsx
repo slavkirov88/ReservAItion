@@ -13,6 +13,7 @@ export function HotelStep1Profile({ onNext }: HotelStep1ProfileProps) {
   const [businessName, setBusinessName] = useState('')
   const [address, setAddress] = useState('')
   const [phone, setPhone] = useState('')
+  const [languages, setLanguages] = useState<string[]>(['bg'])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -24,7 +25,7 @@ export function HotelStep1Profile({ onNext }: HotelStep1ProfileProps) {
       const res = await fetch('/api/settings/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ business_name: businessName, address, phone }),
+        body: JSON.stringify({ business_name: businessName, address, phone, languages }),
       })
       if (!res.ok) {
         const json = await res.json().catch(() => ({ error: 'Unknown error' }))
@@ -67,6 +68,23 @@ export function HotelStep1Profile({ onNext }: HotelStep1ProfileProps) {
           onChange={e => setPhone(e.target.value)}
           placeholder="+359 88 888 8888"
         />
+      </div>
+      <div>
+        <Label>Езици</Label>
+        <div className="flex gap-4 mt-1">
+          {['bg', 'en'].map(lang => (
+            <label key={lang} className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={languages.includes(lang)}
+                onChange={e => setLanguages(
+                  e.target.checked ? [...languages, lang] : languages.filter(l => l !== lang)
+                )}
+              />
+              <span>{lang === 'bg' ? 'Български' : 'English'}</span>
+            </label>
+          ))}
+        </div>
       </div>
       {error && <p className="text-destructive text-sm">{error}</p>}
       <div className="flex justify-end">
