@@ -1,4 +1,5 @@
 import { generateSystemPrompt } from '@/lib/ai/prompt-generator'
+import { buildHotelVapiTools } from '@/lib/hotel/vapi-tools'
 
 export interface VapiTenant {
   id: string
@@ -102,6 +103,54 @@ export async function updateVapiAssistant(
     const err = await response.text()
     throw new Error(`Vapi update error: ${err}`)
   }
+}
+
+export async function createHotelVapiAssistant(
+  tenant: VapiTenant,
+  profile: VapiProfile
+): Promise<{ assistantId: string }> {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const primaryLanguage = tenant.languages?.[0] ?? 'bg'
+
+  const voiceMap: Record<string, string> = {
+    bg: 'bg-BG-BorislavNeural',
+    en: 'en-US-JennyNeural',
+  }
+
+  const response = await fetch('https://api.vapi.ai/assistant', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.VAPI_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      name: `HotelAI - ${tenant.business_name}`,
+      voice: { provider: 'azure', voiceId: voiceMap[primaryLanguage] ?? voiceMap['bg'] },
+      transcriber: { provider: 'deepgram', language: primaryLanguage, model: 'nova-2' },
+      model: {
+        provider: 'openai',
+        model: 'gpt-4o-mini',
+        messages: [{
+          role: 'system',
+          content: buildHotelSystemPrompt(tenant, profile),
+        }],
+        tools: buildHotelVapiTools(tenant.id, baseUrl),
+      },
+      firstMessage: profile.welcome_message_bg,
+    }),
+  })
+
+  if (!response.ok) throw new Error(`Vapi error: ${await response.text()}`)
+  const assistant = await response.json() as { id: string }
+  return { assistantId: assistant.id }
+}
+
+function buildHotelSystemPrompt(tenant: VapiTenant, profile: VapiProfile): string {
+  return `You are the 24/7 AI receptionist for ${tenant.business_name}. You speak ${tenant.languages?.join(' and ')}.
+Your role: help guests check room availability, make reservations, answer questions about the hotel, and handle cancellations.
+Always collect: check-in date, check-out date, number of guests, guest name, email, and phone.
+When a guest agrees to book, use create_reservation. The system will send them an invoice automatically.
+Be warm, professional, and concise. Always confirm details before booking.`
 }
 
 export async function deleteVapiAssistant(assistantId: string): Promise<void> {
