@@ -35,6 +35,11 @@ export async function POST(request: Request) {
 
   if (!invoice) return NextResponse.json({ received: true })
 
+  // Idempotency: exit early if this event was already processed
+  if (invoice.stripe_event_id === event.id) {
+    return NextResponse.json({ received: true })
+  }
+
   // Already paid — idempotent exit
   if (invoice.status === 'paid') {
     return NextResponse.json({ received: true })
@@ -58,11 +63,6 @@ export async function POST(request: Request) {
     } catch (err) {
       console.error('Refund flow error:', err)
     }
-    return NextResponse.json({ received: true })
-  }
-
-  // Idempotency: store stripe event id
-  if (invoice.stripe_event_id === event.id) {
     return NextResponse.json({ received: true })
   }
 

@@ -15,6 +15,7 @@ import {
   BedDouble,
   BookOpen,
   Receipt,
+  Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -32,6 +33,7 @@ const hotelNavItems = [
   { href: '/hotel/rooms', label: 'Стаи', icon: BedDouble },
   { href: '/hotel/reservations', label: 'Резервации', icon: BookOpen },
   { href: '/hotel/invoices', label: 'Фактури', icon: Receipt },
+  { href: '/hotel/guests', label: 'Гости', icon: Users },
   { href: '/settings/profile', label: 'Настройки', icon: Settings },
   { href: '/subscription', label: 'Абонамент', icon: CreditCard },
 ]
