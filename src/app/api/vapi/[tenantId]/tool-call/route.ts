@@ -1,9 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
-import { generateSlots } from '@/lib/scheduling/slot-generator'
-import type { ScheduleRuleRow } from '@/types/database'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { addMinutes, parseISO, format } from 'date-fns'
+import { parseISO, format } from 'date-fns'
 
 interface ToolCallPayload {
   message?: {
@@ -18,18 +16,12 @@ interface ToolCallPayload {
   parameters?: Record<string, unknown>
 }
 
-interface BookedRow {
-  starts_at: string
-  ends_at: string
-}
-
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ tenantId: string }> }
 ) {
   const { tenantId } = await params
 
-  // Validate HMAC signature
   const signature = request.headers.get('x-vapi-signature')
   const body = await request.text()
 
@@ -44,8 +36,7 @@ export async function POST(
   }
 
   const payload = JSON.parse(body) as ToolCallPayload
-  const toolName =
-    payload.message?.toolCalls?.[0]?.function?.name || payload.toolName
+  const toolName = payload.message?.toolCalls?.[0]?.function?.name || payload.toolName
   const rawArgs = payload.message?.toolCalls?.[0]?.function?.arguments
   const parameters = rawArgs
     ? (JSON.parse(rawArgs) as Record<string, string>)
@@ -53,106 +44,65 @@ export async function POST(
 
   const supabase = await createServiceClient()
 
-  if (toolName === 'get_available_slots') {
-    const { date } = parameters
-    const dateObj = new Date(date)
-    const dayOfWeek = dateObj.getDay()
-
-    const { data: override } = await supabase
-      .from('schedule_overrides')
-      .select('override_type')
+  if (toolName === 'get_available_room_types') {
+    const { data: roomTypes } = await supabase
+      .from('room_types')
+      .select('name, capacity, price_per_night')
       .eq('tenant_id', tenantId)
-      .eq('date', date)
-      .single()
 
-    if (override?.override_type === 'closed') {
-      return NextResponse.json({ result: 'На тази дата клиниката е затворена.' })
+    if (!roomTypes || roomTypes.length === 0) {
+      return NextResponse.json({ result: 'Няма налични типове стаи.' })
     }
 
-    const { data: ruleData } = await supabase
-      .from('schedule_rules')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('day_of_week', dayOfWeek)
-      .eq('is_active', true)
-      .single()
-
-    const rule = ruleData as ScheduleRuleRow | null
-
-    if (!rule) return NextResponse.json({ result: 'Няма работно време за тази дата.' })
-
-    const { data: booked } = await supabase
-      .from('appointments')
-      .select('starts_at, ends_at')
-      .eq('tenant_id', tenantId)
-      .gte('starts_at', `${date}T00:00:00`)
-      .lte('starts_at', `${date}T23:59:59`)
-      .in('status', ['confirmed'])
-
-    const slots = generateSlots(date, {
-      start_time: rule.start_time,
-      end_time: rule.end_time,
-      slot_duration_min: rule.slot_duration_min,
-      break_start: rule.break_start,
-      break_end: rule.break_end,
-    }, (booked || []) as BookedRow[])
-
-    return NextResponse.json({
-      result: slots.length > 0
-        ? `Свободни часове на ${date}: ${slots.join(', ')}`
-        : `Няма свободни часове на ${date}.`
-    })
+    const list = roomTypes.map(r => `${r.name} (до ${r.capacity} гости, ${r.price_per_night} лв/нощ)`).join(', ')
+    return NextResponse.json({ result: `Налични типове стаи: ${list}` })
   }
 
-  if (toolName === 'book_appointment') {
-    const { patient_name, patient_phone, service, starts_at } = parameters
-
-    const startDate = parseISO(starts_at)
-    const dayOfWeek = startDate.getDay()
-
-    const { data: slotRuleData } = await supabase
-      .from('schedule_rules')
-      .select('slot_duration_min')
-      .eq('tenant_id', tenantId)
-      .eq('day_of_week', dayOfWeek)
-      .single()
-
-    const slotDuration = (slotRuleData as { slot_duration_min?: number } | null)?.slot_duration_min || 30
-    const endsAt = addMinutes(startDate, slotDuration).toISOString()
+  if (toolName === 'book_reservation') {
+    const { guest_name, guest_phone, room_type, check_in_date, check_out_date } = parameters
 
     const { data: existing } = await supabase
-      .from('appointments')
+      .from('reservations')
       .select('id')
       .eq('tenant_id', tenantId)
-      .eq('starts_at', starts_at)
+      .eq('check_in_date', check_in_date)
       .in('status', ['confirmed'])
       .single()
 
     if (existing) {
-      return NextResponse.json({ result: 'Съжалявам, този час вече е зает. Моля изберете друг.' })
+      return NextResponse.json({ result: 'Съжалявам, тази стая вече е резервирана за тези дати. Моля изберете друг тип.' })
     }
 
-    const { data: appointment, error } = await supabase
-      .from('appointments')
+    // Look up room_type_id from name
+    const { data: roomTypeData } = await supabase
+      .from('room_types')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .ilike('name', room_type || '')
+      .single()
+
+    const { data: reservation, error } = await supabase
+      .from('reservations')
       .insert({
         tenant_id: tenantId,
-        patient_name,
-        patient_phone,
-        service,
-        starts_at,
-        ends_at: endsAt,
+        guest_name,
+        guest_phone,
+        check_in_date,
+        check_out_date: check_out_date || null,
+        room_type_id: roomTypeData?.id || null,
         status: 'confirmed',
         channel: 'phone',
       })
       .select('id')
       .single()
 
-    if (error || !appointment) {
-      return NextResponse.json({ result: 'Грешка при записване. Моля опитайте отново.' })
+    if (error || !reservation) {
+      return NextResponse.json({ result: 'Грешка при резервацията. Моля опитайте отново.' })
     }
 
+    const checkIn = parseISO(check_in_date)
     return NextResponse.json({
-      result: `Часът е записан успешно! ${patient_name}, записан за ${service} на ${format(startDate, 'dd.MM.yyyy')} в ${format(startDate, 'HH:mm')}. Ще получите потвърждение.`
+      result: `Резервацията е потвърдена! ${guest_name}, настанявате се на ${format(checkIn, 'dd.MM.yyyy')}. Ще получите потвърждение.`
     })
   }
 
@@ -163,17 +113,16 @@ export async function POST(
       .eq('id', tenantId)
       .single()
 
-    const { data: profile } = await supabase
-      .from('business_profiles')
-      .select('services, faqs, welcome_message_bg')
+    const { data: roomTypes } = await supabase
+      .from('room_types')
+      .select('name, capacity, price_per_night')
       .eq('tenant_id', tenantId)
-      .single()
 
     const info = [
-      tenant?.business_name ? `Бизнес: ${tenant.business_name}` : '',
+      tenant?.business_name ? `Хотел: ${tenant.business_name}` : '',
       tenant?.address ? `Адрес: ${tenant.address}` : '',
       tenant?.phone ? `Телефон: ${tenant.phone}` : '',
-      profile?.services ? `Услуги: ${JSON.stringify(profile.services)}` : '',
+      roomTypes?.length ? `Стаи: ${roomTypes.map(r => r.name).join(', ')}` : '',
     ].filter(Boolean).join('\n')
 
     return NextResponse.json({ result: info || 'Информацията не е налична.' })

@@ -5,15 +5,15 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Step1BusinessProfile } from './steps/Step1BusinessProfile'
-import { Step2Services } from './steps/Step2Services'
+import { Step2RoomTypes } from './steps/Step2Services'
 import { Step3WorkingHours, type WorkingHour } from './steps/Step3WorkingHours'
 import { Step4FAQ } from './steps/Step4FAQ'
 import { Step5Complete } from './steps/Step5Complete'
 
-interface Service {
+interface RoomType {
   name: string
-  duration_min: number
-  price: number
+  capacity: number
+  price_per_night: number
 }
 
 interface FAQ {
@@ -26,7 +26,7 @@ interface WizardData {
   slug: string
   phone: string
   address: string
-  services: Service[]
+  roomTypes: RoomType[]
   workingHours: WorkingHour[]
   faqs: FAQ[]
 }
@@ -60,7 +60,7 @@ export function OnboardingWizard() {
     slug: '',
     phone: '',
     address: '',
-    services: [],
+    roomTypes: [],
     workingHours: defaultWorkingHours,
     faqs: [],
   })
@@ -120,9 +120,9 @@ export function OnboardingWizard() {
             />
           )}
           {step === 2 && (
-            <Step2Services
-              services={data.services}
-              onChange={services => setData(prev => ({ ...prev, services }))}
+            <Step2RoomTypes
+              roomTypes={data.roomTypes || []}
+              onChange={roomTypes => setData(prev => ({ ...prev, roomTypes }))}
             />
           )}
           {step === 3 && (

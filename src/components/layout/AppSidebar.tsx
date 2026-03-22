@@ -5,8 +5,9 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
-  Calendar,
-  ClipboardList,
+  Sun,
+  CalendarDays,
+  BedDouble,
   Settings,
   CreditCard,
   Bot,
@@ -17,8 +18,9 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/calendar', label: 'Календар', icon: Calendar },
-  { href: '/appointments', label: 'Часове', icon: ClipboardList },
+  { href: '/today', label: 'Днес', icon: Sun },
+  { href: '/reservations', label: 'Резервации', icon: CalendarDays },
+  { href: '/rooms', label: 'Стаи', icon: BedDouble },
   { href: '/settings/profile', label: 'Настройки', icon: Settings },
   { href: '/subscription', label: 'Абонамент', icon: CreditCard },
 ]
@@ -52,7 +54,7 @@ function SidebarContent() {
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 px-6 py-5 border-b border-border">
         <Bot className="h-6 w-6 text-primary" />
-        <span className="font-semibold text-lg">ReceptAI</span>
+        <span className="font-semibold text-lg">ReservAItion</span>
       </div>
       <NavLinks />
     </div>
@@ -62,17 +64,12 @@ function SidebarContent() {
 export function AppSidebar() {
   return (
     <>
-      {/* Desktop sidebar */}
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card h-screen sticky top-0">
         <SidebarContent />
       </aside>
-
-      {/* Mobile sidebar */}
       <Sheet>
         <SheetTrigger
-          render={
-            <Button variant="ghost" size="icon" className="md:hidden" />
-          }
+          render={<Button variant="ghost" size="icon" className="md:hidden" />}
         >
           <Menu className="h-5 w-5" />
         </SheetTrigger>

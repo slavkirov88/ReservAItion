@@ -29,7 +29,7 @@ export function Step1BusinessProfile({ data, onChange }: Props) {
           id="businessName"
           value={data.businessName}
           onChange={e => handleNameChange(e.target.value)}
-          placeholder="Дентален Център Иванов"
+          placeholder="Хотел Морски Бриз"
         />
       </div>
       <div className="space-y-2">
@@ -38,7 +38,7 @@ export function Step1BusinessProfile({ data, onChange }: Props) {
           id="slug"
           value={data.slug}
           onChange={e => onChange({ ...data, slug: e.target.value })}
-          placeholder="dentalen-centyr-ivanov"
+          placeholder="hotel-morski-briz"
         />
         <p className="text-xs text-muted-foreground">Автоматично генериран от името</p>
       </div>

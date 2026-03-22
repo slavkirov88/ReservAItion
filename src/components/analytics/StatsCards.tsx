@@ -1,46 +1,42 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Calendar, Phone, CheckCircle, XCircle } from 'lucide-react'
+import { BedDouble, LogIn, LogOut, Phone } from 'lucide-react'
 
 interface Stats {
-  total_appointments: number
-  confirmed: number
-  cancelled: number
-  completed: number
-  total_calls: number
-  total_chats: number
-  avg_duration_sec: number
-  booked_from_calls: number
+  occupancy_percent: number
+  checkins_today: number
+  checkouts_today: number
+  total_calls_week: number
 }
 
 export function StatsCards({ stats }: { stats: Stats }) {
   const cards = [
     {
-      title: 'Общо часове тази седмица',
-      value: stats.total_appointments,
-      icon: Calendar,
-      description: `${stats.confirmed} потвърдени`,
+      title: 'Заетост',
+      value: `${stats.occupancy_percent}%`,
+      icon: BedDouble,
+      description: 'от стаите са заети',
       className: 'text-primary',
     },
     {
-      title: 'Телефонни обаждания',
-      value: stats.total_calls,
-      icon: Phone,
-      description: `${stats.booked_from_calls} записани`,
-      className: 'text-blue-400',
-    },
-    {
-      title: 'Завършени часове',
-      value: stats.completed,
-      icon: CheckCircle,
-      description: 'тази седмица',
+      title: 'Check-ins днес',
+      value: stats.checkins_today,
+      icon: LogIn,
+      description: 'пристигащи',
       className: 'text-green-400',
     },
     {
-      title: 'Отменени часове',
-      value: stats.cancelled,
-      icon: XCircle,
+      title: 'Check-outs днес',
+      value: stats.checkouts_today,
+      icon: LogOut,
+      description: 'напускащи',
+      className: 'text-blue-400',
+    },
+    {
+      title: 'AI обаждания',
+      value: stats.total_calls_week,
+      icon: Phone,
       description: 'тази седмица',
-      className: 'text-red-400',
+      className: 'text-purple-400',
     },
   ]
 

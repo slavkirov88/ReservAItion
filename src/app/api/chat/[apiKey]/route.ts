@@ -1,37 +1,50 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { generateSystemPrompt } from '@/lib/ai/prompt-generator'
-import { generateSlots } from '@/lib/scheduling/slot-generator'
-import type { ScheduleRuleRow } from '@/types/database'
-import OpenAI from 'openai'
-import { addMinutes, parseISO, format } from 'date-fns'
+import Anthropic from '@anthropic-ai/sdk'
 
-// Suppress unused import warning
-void format
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder' })
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-
-interface BookedRow {
-  starts_at: string
-  ends_at: string
+interface MessageParam {
+  role: 'user' | 'assistant'
+  content: string
 }
 
-interface ChatToolCall {
-  id: string
-  function: {
-    name: string
-    arguments: string
-  }
-}
+const tools: Anthropic.Tool[] = [
+  {
+    name: 'get_available_room_types',
+    description: 'Get available room types with prices and capacity',
+    input_schema: {
+      type: 'object' as const,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'book_reservation',
+    description: 'Book a hotel reservation',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        guest_name: { type: 'string' },
+        guest_phone: { type: 'string' },
+        room_type: { type: 'string', description: 'Room type name' },
+        check_in_date: { type: 'string', description: 'Check-in date YYYY-MM-DD' },
+        check_out_date: { type: 'string', description: 'Check-out date YYYY-MM-DD' },
+      },
+      required: ['guest_name', 'guest_phone', 'room_type', 'check_in_date'],
+    },
+  },
+]
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ apiKey: string }> }
 ) {
   const { apiKey } = await params
-  const { message, history = [], sessionId } = await request.json() as {
+  const { message, history = [] } = await request.json() as {
     message: string
-    history: OpenAI.Chat.Completions.ChatCompletionMessageParam[]
+    history: MessageParam[]
     sessionId?: string
   }
 
@@ -47,144 +60,79 @@ export async function POST(
 
   const { data: profile } = await supabase
     .from('business_profiles')
-    .select('services, faqs, booking_rules, welcome_message_bg')
+    .select('faqs, booking_rules, welcome_message_bg')
     .eq('tenant_id', tenant.id)
     .single()
+
+  const { data: roomTypesData } = await supabase
+    .from('room_types')
+    .select('name, capacity, price_per_night, description')
+    .eq('tenant_id', tenant.id)
 
   const systemPrompt = generateSystemPrompt({
     business_name: tenant.business_name,
     address: tenant.address || '',
-    services: profile?.services || [],
+    room_types: roomTypesData || [],
     faqs: profile?.faqs || [],
     booking_rules: profile?.booking_rules || '',
     welcome_message_bg: profile?.welcome_message_bg || 'Здравейте!',
   }, tenant.languages || ['bg'])
 
-  const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
-    {
-      type: 'function',
-      function: {
-        name: 'get_available_slots',
-        description: 'Get available appointment slots for a given date',
-        parameters: {
-          type: 'object',
-          properties: {
-            date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
-          },
-          required: ['date'],
-        },
-      },
-    },
-    {
-      type: 'function',
-      function: {
-        name: 'book_appointment',
-        description: 'Book an appointment',
-        parameters: {
-          type: 'object',
-          properties: {
-            patient_name: { type: 'string' },
-            patient_phone: { type: 'string' },
-            service: { type: 'string' },
-            starts_at: { type: 'string', description: 'ISO datetime' },
-          },
-          required: ['patient_name', 'patient_phone', 'service', 'starts_at'],
-        },
-      },
-    },
-  ]
-
-  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-    { role: 'system', content: systemPrompt },
+  const messages: Anthropic.MessageParam[] = [
     ...history,
     { role: 'user', content: message },
   ]
 
-  // Non-streaming first pass to detect tool calls
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+  // First pass — detect tool calls
+  const response = await anthropic.messages.create({
+    model: 'claude-haiku-4-5',
+    max_tokens: 1024,
+    system: systemPrompt,
     messages,
     tools,
-    stream: false,
   })
 
-  const choice = response.choices[0]
+  if (response.stop_reason === 'tool_use') {
+    const toolUseBlocks = response.content.filter(
+      (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use'
+    )
 
-  if (choice.finish_reason === 'tool_calls' && choice.message.tool_calls) {
-    const toolResults: OpenAI.Chat.Completions.ChatCompletionToolMessageParam[] = []
+    const toolResults: Anthropic.ToolResultBlockParam[] = []
 
-    for (const rawToolCall of choice.message.tool_calls) {
-      const toolCall = rawToolCall as unknown as ChatToolCall
-      const args = JSON.parse(toolCall.function.arguments) as Record<string, string>
+    for (const toolCall of toolUseBlocks) {
+      const args = toolCall.input as Record<string, string>
 
-      if (toolCall.function.name === 'get_available_slots') {
-        const dateStr = args.date
-        const dateObj = new Date(dateStr)
-        const dayOfWeek = dateObj.getDay()
-
-        const { data: ruleData } = await supabase
-          .from('schedule_rules')
-          .select('*')
+      if (toolCall.name === 'get_available_room_types') {
+        const { data: roomTypes } = await supabase
+          .from('room_types')
+          .select('name, capacity, price_per_night')
           .eq('tenant_id', tenant.id)
-          .eq('day_of_week', dayOfWeek)
-          .eq('is_active', true)
-          .single()
 
-        const rule = ruleData as ScheduleRuleRow | null
-
-        if (!rule) {
-          toolResults.push({ role: 'tool', tool_call_id: toolCall.id, content: 'Няма работно време.' })
-          continue
-        }
-
-        const { data: booked } = await supabase
-          .from('appointments')
-          .select('starts_at, ends_at')
-          .eq('tenant_id', tenant.id)
-          .gte('starts_at', `${dateStr}T00:00:00`)
-          .lte('starts_at', `${dateStr}T23:59:59`)
-          .in('status', ['confirmed'])
-
-        const slots = generateSlots(dateStr, {
-          start_time: rule.start_time,
-          end_time: rule.end_time,
-          slot_duration_min: rule.slot_duration_min,
-          break_start: rule.break_start,
-          break_end: rule.break_end,
-        }, (booked || []) as BookedRow[])
-
+        const list = roomTypes?.map(r => `${r.name}: до ${r.capacity} гости, ${r.price_per_night} лв/нощ`).join('; ')
         toolResults.push({
-          role: 'tool',
-          tool_call_id: toolCall.id,
-          content: slots.length > 0
-            ? `Свободни часове: ${slots.join(', ')}`
-            : 'Няма свободни часове.',
+          type: 'tool_result',
+          tool_use_id: toolCall.id,
+          content: list ? `Налични стаи: ${list}` : 'Няма налични стаи.',
         })
       }
 
-      if (toolCall.function.name === 'book_appointment') {
-        const startDate = parseISO(args.starts_at)
-        const dayOfWeek = startDate.getDay()
-
-        const { data: slotRule } = await supabase
-          .from('schedule_rules')
-          .select('slot_duration_min')
+      if (toolCall.name === 'book_reservation') {
+        const { data: roomTypeData } = await supabase
+          .from('room_types')
+          .select('id')
           .eq('tenant_id', tenant.id)
-          .eq('day_of_week', dayOfWeek)
+          .ilike('name', args.room_type || '')
           .single()
 
-        const slotDuration = (slotRule as { slot_duration_min?: number } | null)?.slot_duration_min || 30
-        const endsAt = addMinutes(startDate, slotDuration).toISOString()
-
-        const { data: appointment, error } = await supabase
-          .from('appointments')
+        const { data: reservation, error } = await supabase
+          .from('reservations')
           .insert({
             tenant_id: tenant.id,
-            patient_name: args.patient_name,
-            patient_phone: args.patient_phone,
-            service: args.service,
-            starts_at: args.starts_at,
-            ends_at: endsAt,
+            guest_name: args.guest_name,
+            guest_phone: args.guest_phone,
+            check_in_date: args.check_in_date,
+            check_out_date: args.check_out_date || null,
+            room_type_id: roomTypeData?.id || null,
             status: 'confirmed',
             channel: 'chat',
           })
@@ -192,18 +140,25 @@ export async function POST(
           .single()
 
         toolResults.push({
-          role: 'tool',
-          tool_call_id: toolCall.id,
-          content: error || !appointment
-            ? 'Грешка при записването.'
-            : `Часът е записан! ID: ${appointment.id}`,
+          type: 'tool_result',
+          tool_use_id: toolCall.id,
+          content: error || !reservation
+            ? 'Грешка при резервацията.'
+            : `Резервацията е потвърдена! ID: ${reservation.id}`,
         })
       }
     }
 
-    const finalStream = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [...messages, choice.message, ...toolResults],
+    // Stream final response after tool execution
+    const finalStream = await anthropic.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages: [
+        ...messages,
+        { role: 'assistant', content: response.content },
+        { role: 'user', content: toolResults },
+      ],
       stream: true,
     })
 
@@ -211,24 +166,29 @@ export async function POST(
   }
 
   // No tool calls — stream directly
-  const stream = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+  const stream = await anthropic.messages.create({
+    model: 'claude-haiku-4-5',
+    max_tokens: 1024,
+    system: systemPrompt,
     messages,
+    tools,
     stream: true,
   })
 
   return streamResponse(stream)
 }
 
-function streamResponse(stream: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>) {
+async function streamResponse(stream: AsyncIterable<Anthropic.MessageStreamEvent>) {
   return new Response(
     new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder()
-        for await (const chunk of stream) {
-          const text = chunk.choices[0]?.delta?.content || ''
-          if (text) {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`))
+        for await (const event of stream) {
+          if (
+            event.type === 'content_block_delta' &&
+            event.delta.type === 'text_delta'
+          ) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`))
           }
         }
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))

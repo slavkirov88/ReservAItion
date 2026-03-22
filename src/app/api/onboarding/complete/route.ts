@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createVapiAssistant } from '@/lib/vapi/vapi-service'
 import type { TenantInsert, TenantRow, BusinessProfileInsert, ScheduleRuleInsert } from '@/types/database'
 
 export async function POST(request: Request) {
@@ -11,7 +12,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { businessName, slug, phone, address, services, workingHours, faqs } = body
+    const { businessName, slug, phone, address, roomTypes, workingHours, faqs } = body
 
     if (!businessName || !slug) {
       return NextResponse.json({ error: 'Business name and slug are required' }, { status: 400 })
@@ -48,7 +49,6 @@ export async function POST(request: Request) {
     // 2. Create business profile
     const profileInsert: BusinessProfileInsert = {
       tenant_id: tenant.id,
-      services: services || [],
       faqs: faqs || [],
       booking_rules: '',
       welcome_message_bg: 'Здравейте! Как мога да ви помогна?',
@@ -57,6 +57,19 @@ export async function POST(request: Request) {
     await serviceClient
       .from('business_profiles')
       .insert(profileInsert)
+
+    // 2b. Insert room types if provided
+    if (Array.isArray(roomTypes) && roomTypes.length > 0) {
+      const roomTypeInserts = roomTypes.map((rt: { name: string; capacity: number; price_per_night: number }) => ({
+        tenant_id: tenant.id,
+        name: rt.name,
+        capacity: rt.capacity,
+        price_per_night: rt.price_per_night,
+      }))
+      await serviceClient
+        .from('room_types')
+        .insert(roomTypeInserts)
+    }
 
     // 3. Create schedule rules
     const activeHours = (workingHours || []).filter((h: { is_active: boolean }) => h.is_active)
@@ -83,12 +96,33 @@ export async function POST(request: Request) {
         .insert(scheduleInserts)
     }
 
-    // Note: Vapi assistant creation would happen here in production
-    // For now return the tenant's public_api_key
+    // 4. Create Vapi assistant
+    let vapiAssistantId: string | null = null
+    try {
+      const { assistantId } = await createVapiAssistant(
+        { id: tenant.id, business_name: tenant.business_name, languages: tenant.languages || ['bg'] },
+        {
+          room_types: [],
+          faqs: faqs || [],
+          booking_rules: '',
+          welcome_message_bg: 'Здравейте! Как мога да ви помогна?',
+          address: address || '',
+        }
+      )
+      vapiAssistantId = assistantId
+      await serviceClient
+        .from('tenants')
+        .update({ vapi_assistant_id: assistantId })
+        .eq('id', tenant.id)
+    } catch (vapiError) {
+      console.error('Vapi assistant creation failed (non-fatal):', vapiError)
+    }
+
     return NextResponse.json({
       tenantId: tenant.id,
       publicApiKey: tenant.public_api_key,
       vapiPhone: tenant.vapi_phone_number || '',
+      vapiAssistantId,
     })
   } catch (error: unknown) {
     console.error('Onboarding error:', error)

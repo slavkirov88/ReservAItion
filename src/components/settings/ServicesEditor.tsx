@@ -5,7 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Trash2 } from 'lucide-react'
-import type { Service } from '@/types/database'
+interface Service {
+  name: string
+  duration_min: number
+  price: number
+}
 
 export function ServicesEditor() {
   const [services, setServices] = useState<Service[]>([])

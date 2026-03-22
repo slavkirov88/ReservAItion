@@ -22,15 +22,15 @@ export function Step5Complete({ vapiPhone, publicApiKey }: Props) {
         <CheckCircle className="h-16 w-16 text-green-500" />
       </div>
       <div>
-        <h3 className="text-xl font-semibold">Готово! ReceptAI е активен.</h3>
+        <h3 className="text-xl font-semibold">Готово! ReservAItion е активен.</h3>
         <p className="text-muted-foreground mt-1">Вашият AI рецепционист е настроен и готов за работа.</p>
       </div>
 
       <div className="text-left space-y-4">
         <div className="rounded-lg border border-border p-4 space-y-2">
-          <p className="text-sm font-medium">Телефонен номер за Vapi</p>
+          <p className="text-sm font-medium">Телефонен номер на AI рецепциониста</p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 text-sm bg-muted rounded px-2 py-1">{vapiPhone || 'Ще бъде назначен'}</code>
+            <code className="flex-1 text-sm bg-muted rounded px-2 py-1">{vapiPhone || 'Задава се от Настройки → Профил'}</code>
             {vapiPhone && (
               <Button variant="ghost" size="icon" onClick={() => copy(vapiPhone)} className="h-8 w-8">
                 <Copy className="h-4 w-4" />

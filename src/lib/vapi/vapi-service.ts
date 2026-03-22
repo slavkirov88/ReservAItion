@@ -7,7 +7,7 @@ export interface VapiTenant {
 }
 
 export interface VapiProfile {
-  services: Array<{ name: string; duration_min: number; price: number }>
+  room_types: Array<{ name: string; capacity: number; price_per_night: number }>
   faqs: Array<{ question: string; answer: string }>
   booking_rules: string
   welcome_message_bg: string
@@ -21,7 +21,7 @@ export async function createVapiAssistant(
   const systemPrompt = generateSystemPrompt({
     business_name: tenant.business_name,
     address: profile.address || '',
-    services: profile.services || [],
+    room_types: profile.room_types || [],
     faqs: profile.faqs || [],
     booking_rules: profile.booking_rules || '',
     welcome_message_bg: profile.welcome_message_bg,
@@ -36,7 +36,7 @@ export async function createVapiAssistant(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      name: `ReceptAI - ${tenant.business_name}`,
+      name: `ReservAItion - ${tenant.business_name}`,
       voice: {
         provider: 'azure',
         voiceId: 'bg-BG-BorislavNeural',
@@ -73,7 +73,7 @@ export async function updateVapiAssistant(
   const systemPrompt = generateSystemPrompt({
     business_name: tenant.business_name,
     address: profile.address || '',
-    services: profile.services || [],
+    room_types: profile.room_types || [],
     faqs: profile.faqs || [],
     booking_rules: profile.booking_rules || '',
     welcome_message_bg: profile.welcome_message_bg,

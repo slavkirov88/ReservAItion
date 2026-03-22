@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { updateVapiAssistant } from '@/lib/vapi/vapi-service'
-import type { Service } from '@/types/database'
+import type { RoomTypeInsert } from '@/types/database'
 
 export async function GET() {
   const supabase = await createClient()
@@ -11,13 +10,36 @@ export async function GET() {
   const { data: tenant } = await supabase.from('tenants').select('id').eq('owner_id', user.id).single()
   if (!tenant) return NextResponse.json({ error: 'No tenant' }, { status: 404 })
 
-  const { data: profile } = await supabase
-    .from('business_profiles')
-    .select('services')
+  const { data: roomTypes, error } = await supabase
+    .from('room_types')
+    .select('*')
     .eq('tenant_id', tenant.id)
+    .order('created_at', { ascending: true })
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({ roomTypes: roomTypes || [] })
+}
+
+export async function POST(request: Request) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { data: tenant } = await supabase.from('tenants').select('id').eq('owner_id', user.id).single()
+  if (!tenant) return NextResponse.json({ error: 'No tenant' }, { status: 404 })
+
+  const body = await request.json() as Omit<RoomTypeInsert, 'tenant_id'>
+
+  const { data, error } = await supabase
+    .from('room_types')
+    .insert({ ...body, tenant_id: tenant.id })
+    .select()
     .single()
 
-  return NextResponse.json({ services: profile?.services || [] })
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({ roomType: data }, { status: 201 })
 }
 
 export async function PUT(request: Request) {
@@ -25,47 +47,23 @@ export async function PUT(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { services } = await request.json() as { services: Service[] }
-
-  const { data: tenant } = await supabase
-    .from('tenants')
-    .select('id, business_name, languages, address, vapi_assistant_id')
-    .eq('owner_id', user.id)
-    .single()
-
+  const { data: tenant } = await supabase.from('tenants').select('id').eq('owner_id', user.id).single()
   if (!tenant) return NextResponse.json({ error: 'No tenant' }, { status: 404 })
 
-  const { error } = await supabase
-    .from('business_profiles')
-    .update({ services, updated_at: new Date().toISOString() })
+  const body = await request.json() as RoomTypeInsert & { id: string }
+  const { id, tenant_id: _tenant_id, ...fields } = body
+
+  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+
+  const { data, error } = await supabase
+    .from('room_types')
+    .update(fields)
+    .eq('id', id)
     .eq('tenant_id', tenant.id)
+    .select()
+    .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Sync to Vapi if assistant exists
-  if (tenant.vapi_assistant_id) {
-    try {
-      const { data: profile } = await supabase
-        .from('business_profiles')
-        .select('faqs, booking_rules, welcome_message_bg')
-        .eq('tenant_id', tenant.id)
-        .single()
-
-      await updateVapiAssistant(tenant.vapi_assistant_id, {
-        id: tenant.id,
-        business_name: tenant.business_name,
-        languages: tenant.languages,
-      }, {
-        services,
-        faqs: profile?.faqs || [],
-        booking_rules: profile?.booking_rules || '',
-        welcome_message_bg: profile?.welcome_message_bg || 'Здравейте!',
-        address: tenant.address || '',
-      })
-    } catch {
-      // Non-fatal: log but don't fail the request
-    }
-  }
-
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ roomType: data })
 }

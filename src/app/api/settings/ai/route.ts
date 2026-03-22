@@ -57,7 +57,7 @@ export async function PUT(request: Request) {
     try {
       const { data: profile } = await supabase
         .from('business_profiles')
-        .select('services, faqs, booking_rules, welcome_message_bg')
+        .select('faqs, booking_rules, welcome_message_bg')
         .eq('tenant_id', tenant.id)
         .single()
 
@@ -66,7 +66,7 @@ export async function PUT(request: Request) {
         business_name: tenant.business_name,
         languages: tenant.languages,
       }, {
-        services: profile?.services || [],
+        room_types: [],
         faqs: profile?.faqs || [],
         booking_rules: profile?.booking_rules || '',
         welcome_message_bg: profile?.welcome_message_bg || 'Здравейте!',

@@ -1,10 +1,4 @@
 // JSONB field types
-export type Service = {
-  name: string
-  duration_min: number
-  price: number
-}
-
 export type FAQ = {
   question: string
   answer: string
@@ -44,7 +38,6 @@ export type TenantRow = {
 export type BusinessProfileRow = {
   id: string
   tenant_id: string
-  services: Service[]
   faqs: FAQ[]
   booking_rules: string
   welcome_message_bg: string
@@ -76,14 +69,35 @@ export type ScheduleOverrideRow = {
   created_at: string
 }
 
-export type AppointmentRow = {
+export type RoomTypeRow = {
   id: string
   tenant_id: string
-  patient_name: string
-  patient_phone: string
-  service: string
-  starts_at: string
-  ends_at: string
+  name: string
+  description: string | null
+  capacity: number
+  price_per_night: number
+  created_at: string
+}
+
+export type RoomRow = {
+  id: string
+  tenant_id: string
+  room_type_id: string
+  room_number: string | null
+  name: string | null
+  status: 'free' | 'occupied' | 'cleaning' | 'maintenance'
+  created_at: string
+}
+
+export type ReservationRow = {
+  id: string
+  tenant_id: string
+  guest_name: string
+  guest_phone: string
+  room_type_id: string | null
+  room_id: string | null
+  check_in_date: string
+  check_out_date: string | null
   status: 'confirmed' | 'cancelled' | 'no_show' | 'completed'
   channel: 'phone' | 'chat' | 'manual'
   notes: string | null
@@ -97,13 +111,13 @@ export type ConversationRow = {
   channel: 'phone' | 'chat'
   language: string
   transcript: TranscriptEntry[]
-  appointment_id: string | null
+  reservation_id: string | null
   duration_sec: number | null
   outcome: 'booked' | 'answered' | 'failed' | 'transferred' | null
   created_at: string
 }
 
-// Insert types (what you send to create a record)
+// Insert types
 export type TenantInsert = {
   id?: string
   owner_id: string
@@ -126,7 +140,6 @@ export type TenantInsert = {
 export type BusinessProfileInsert = {
   id?: string
   tenant_id: string
-  services?: Service[]
   faqs?: FAQ[]
   booking_rules?: string
   welcome_message_bg?: string
@@ -158,14 +171,35 @@ export type ScheduleOverrideInsert = {
   created_at?: string
 }
 
-export type AppointmentInsert = {
+export type RoomTypeInsert = {
   id?: string
   tenant_id: string
-  patient_name: string
-  patient_phone: string
-  service: string
-  starts_at: string
-  ends_at: string
+  name: string
+  description?: string | null
+  capacity?: number
+  price_per_night: number
+  created_at?: string
+}
+
+export type RoomInsert = {
+  id?: string
+  tenant_id: string
+  room_type_id: string
+  room_number?: string | null
+  name?: string | null
+  status?: 'free' | 'occupied' | 'cleaning' | 'maintenance'
+  created_at?: string
+}
+
+export type ReservationInsert = {
+  id?: string
+  tenant_id: string
+  guest_name: string
+  guest_phone: string
+  room_type_id?: string | null
+  room_id?: string | null
+  check_in_date: string
+  check_out_date?: string | null
   status?: 'confirmed' | 'cancelled' | 'no_show' | 'completed'
   channel: 'phone' | 'chat' | 'manual'
   notes?: string | null
@@ -179,68 +213,44 @@ export type ConversationInsert = {
   channel: 'phone' | 'chat'
   language?: string
   transcript?: TranscriptEntry[]
-  appointment_id?: string | null
+  reservation_id?: string | null
   duration_sec?: number | null
   outcome?: 'booked' | 'answered' | 'failed' | 'transferred' | null
   created_at?: string
 }
 
-// Update types (all fields optional except PK)
+// Update types
 export type TenantUpdate = Partial<Omit<TenantInsert, 'id'>>
 export type BusinessProfileUpdate = Partial<Omit<BusinessProfileInsert, 'id'>>
 export type ScheduleRuleUpdate = Partial<Omit<ScheduleRuleInsert, 'id'>>
 export type ScheduleOverrideUpdate = Partial<Omit<ScheduleOverrideInsert, 'id'>>
-export type AppointmentUpdate = Partial<Omit<AppointmentInsert, 'id'>>
+export type RoomTypeUpdate = Partial<Omit<RoomTypeInsert, 'id'>>
+export type RoomUpdate = Partial<Omit<RoomInsert, 'id'>>
+export type ReservationUpdate = Partial<Omit<ReservationInsert, 'id'>>
 export type ConversationUpdate = Partial<Omit<ConversationInsert, 'id'>>
 
-// Helper/alias types
+// Aliases
 export type Tenant = TenantRow
 export type BusinessProfile = BusinessProfileRow
 export type ScheduleRule = ScheduleRuleRow
 export type ScheduleOverride = ScheduleOverrideRow
-export type Appointment = AppointmentRow
+export type RoomType = RoomTypeRow
+export type Room = RoomRow
+export type Reservation = ReservationRow
 export type Conversation = ConversationRow
 
-// Database type for Supabase client typing
+// Supabase Database type
 export type Database = {
   public: {
     Tables: {
-      tenants: {
-        Row: TenantRow
-        Insert: TenantInsert
-        Update: TenantUpdate
-        Relationships: []
-      }
-      business_profiles: {
-        Row: BusinessProfileRow
-        Insert: BusinessProfileInsert
-        Update: BusinessProfileUpdate
-        Relationships: []
-      }
-      schedule_rules: {
-        Row: ScheduleRuleRow
-        Insert: ScheduleRuleInsert
-        Update: ScheduleRuleUpdate
-        Relationships: []
-      }
-      schedule_overrides: {
-        Row: ScheduleOverrideRow
-        Insert: ScheduleOverrideInsert
-        Update: ScheduleOverrideUpdate
-        Relationships: []
-      }
-      appointments: {
-        Row: AppointmentRow
-        Insert: AppointmentInsert
-        Update: AppointmentUpdate
-        Relationships: []
-      }
-      conversations: {
-        Row: ConversationRow
-        Insert: ConversationInsert
-        Update: ConversationUpdate
-        Relationships: []
-      }
+      tenants: { Row: TenantRow; Insert: TenantInsert; Update: TenantUpdate; Relationships: [] }
+      business_profiles: { Row: BusinessProfileRow; Insert: BusinessProfileInsert; Update: BusinessProfileUpdate; Relationships: [] }
+      schedule_rules: { Row: ScheduleRuleRow; Insert: ScheduleRuleInsert; Update: ScheduleRuleUpdate; Relationships: [] }
+      schedule_overrides: { Row: ScheduleOverrideRow; Insert: ScheduleOverrideInsert; Update: ScheduleOverrideUpdate; Relationships: [] }
+      room_types: { Row: RoomTypeRow; Insert: RoomTypeInsert; Update: RoomTypeUpdate; Relationships: [] }
+      rooms: { Row: RoomRow; Insert: RoomInsert; Update: RoomUpdate; Relationships: [] }
+      reservations: { Row: ReservationRow; Insert: ReservationInsert; Update: ReservationUpdate; Relationships: [] }
+      conversations: { Row: ConversationRow; Insert: ConversationInsert; Update: ConversationUpdate; Relationships: [] }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

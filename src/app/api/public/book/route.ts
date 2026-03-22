@@ -5,9 +5,9 @@ import { addMinutes, parseISO, format } from 'date-fns'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { api_key, patient_name, patient_phone, service, starts_at } = body
+    const { api_key, guest_name, guest_phone, service, starts_at } = body
 
-    if (!api_key || !patient_name || !patient_phone || !service || !starts_at) {
+    if (!api_key || !guest_name || !guest_phone || !service || !starts_at) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -41,10 +41,10 @@ export async function POST(request: Request) {
 
     // Check slot is still available
     const { data: existing } = await supabase
-      .from('appointments')
+      .from('reservations')
       .select('id')
       .eq('tenant_id', tenant.id)
-      .eq('starts_at', starts_at)
+      .eq('check_in_date', starts_at)
       .in('status', ['confirmed'])
       .single()
 
@@ -53,14 +53,14 @@ export async function POST(request: Request) {
     }
 
     const { data: appointment, error } = await supabase
-      .from('appointments')
+      .from('reservations')
       .insert({
         tenant_id: tenant.id,
-        patient_name,
-        patient_phone,
-        service,
-        starts_at,
-        ends_at: endsAt,
+        guest_name,
+        guest_phone,
+        notes: service || null,
+        check_in_date: starts_at,
+        check_out_date: endsAt,
         status: 'confirmed',
         channel: 'chat',
       })

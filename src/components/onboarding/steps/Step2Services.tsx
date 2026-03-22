@@ -4,31 +4,31 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Plus, Trash2 } from 'lucide-react'
 
-interface Service {
+interface RoomType {
   name: string
-  duration_min: number
-  price: number
+  capacity: number
+  price_per_night: number
 }
 
 interface Props {
-  services: Service[]
-  onChange: (services: Service[]) => void
+  roomTypes: RoomType[]
+  onChange: (roomTypes: RoomType[]) => void
 }
 
-export function Step2Services({ services, onChange }: Props) {
-  function addService() {
-    onChange([...services, { name: '', duration_min: 30, price: 0 }])
+export function Step2RoomTypes({ roomTypes, onChange }: Props) {
+  function addRoomType() {
+    onChange([...roomTypes, { name: '', capacity: 2, price_per_night: 0 }])
   }
 
-  function removeService(index: number) {
-    onChange(services.filter((_, i) => i !== index))
+  function removeRoomType(index: number) {
+    onChange(roomTypes.filter((_, i) => i !== index))
   }
 
-  function updateService(index: number, field: keyof Service, value: string) {
-    const updated = services.map((s, i) => {
-      if (i !== index) return s
-      if (field === 'name') return { ...s, name: value }
-      return { ...s, [field]: Number(value) }
+  function updateRoomType(index: number, field: keyof RoomType, value: string) {
+    const updated = roomTypes.map((rt, i) => {
+      if (i !== index) return rt
+      if (field === 'name') return { ...rt, name: value }
+      return { ...rt, [field]: Number(value) }
     })
     onChange(updated)
   }
@@ -36,39 +36,39 @@ export function Step2Services({ services, onChange }: Props) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Добавете услугите, които предлагате. AI ще ги предлага при записване на часове.
+        Добавете типовете стаи, които предлагате. AI ще ги предлага при резервации.
       </p>
 
-      {services.length > 0 && (
+      {roomTypes.length > 0 && (
         <div className="space-y-3">
           <div className="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground">
-            <div className="col-span-5">Услуга</div>
-            <div className="col-span-3">Мин.</div>
-            <div className="col-span-3">Цена (лв)</div>
+            <div className="col-span-5">Тип стая</div>
+            <div className="col-span-3">Капацитет</div>
+            <div className="col-span-3">Цена/нощ (лв)</div>
             <div className="col-span-1" />
           </div>
-          {services.map((service, i) => (
+          {roomTypes.map((rt, i) => (
             <div key={i} className="grid grid-cols-12 gap-2 items-center">
               <div className="col-span-5">
                 <Input
-                  value={service.name}
-                  onChange={e => updateService(i, 'name', e.target.value)}
-                  placeholder="Преглед"
+                  value={rt.name}
+                  onChange={e => updateRoomType(i, 'name', e.target.value)}
+                  placeholder="Стандартна, Делукс..."
                 />
               </div>
               <div className="col-span-3">
                 <Input
                   type="number"
-                  value={service.duration_min}
-                  onChange={e => updateService(i, 'duration_min', e.target.value)}
-                  min={5}
+                  value={rt.capacity}
+                  onChange={e => updateRoomType(i, 'capacity', e.target.value)}
+                  min={1}
                 />
               </div>
               <div className="col-span-3">
                 <Input
                   type="number"
-                  value={service.price}
-                  onChange={e => updateService(i, 'price', e.target.value)}
+                  value={rt.price_per_night}
+                  onChange={e => updateRoomType(i, 'price_per_night', e.target.value)}
                   min={0}
                 />
               </div>
@@ -76,7 +76,7 @@ export function Step2Services({ services, onChange }: Props) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => removeService(i)}
+                  onClick={() => removeRoomType(i)}
                   className="h-8 w-8 text-muted-foreground hover:text-destructive"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -87,9 +87,9 @@ export function Step2Services({ services, onChange }: Props) {
         </div>
       )}
 
-      <Button variant="outline" size="sm" onClick={addService} className="gap-2">
+      <Button variant="outline" size="sm" onClick={addRoomType} className="gap-2">
         <Plus className="h-4 w-4" />
-        Добави услуга
+        Добави тип стая
       </Button>
     </div>
   )

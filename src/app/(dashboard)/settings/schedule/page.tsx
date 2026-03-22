@@ -6,7 +6,7 @@ export default function SchedulePage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Работно време</h1>
-        <p className="text-muted-foreground">Настройте работния график на вашата клиника</p>
+        <p className="text-muted-foreground">Настройте работния график на вашия хотел</p>
       </div>
       <WorkingHoursEditor />
       <CalendarOverrides />
