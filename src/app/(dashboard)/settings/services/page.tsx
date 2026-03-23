@@ -4,8 +4,8 @@ export default function ServicesSettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Услуги</h1>
-        <p className="text-muted-foreground">Управлявайте услугите, предлагани от клиниката</p>
+        <h1 className="text-2xl font-bold">Типове стаи</h1>
+        <p className="text-muted-foreground">Управлявайте типовете стаи, предлагани от хотела</p>
       </div>
       <ServicesEditor />
     </div>

@@ -51,7 +51,7 @@ export function ProfileEditor() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Профил на клиниката</CardTitle>
+        <CardTitle className="text-base">Профил на хотела</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">

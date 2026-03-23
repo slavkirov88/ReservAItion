@@ -52,16 +52,17 @@ export async function GET(request: Request) {
 
   if (!rule) return NextResponse.json({ slots: [], date })
 
-  // Get booked appointments
+  // Get booked reservations
   const startOfDay = `${date}T00:00:00`
   const endOfDay = `${date}T23:59:59`
-  const { data: booked } = await supabase
-    .from('appointments')
-    .select('starts_at, ends_at')
+  const { data: bookedRaw } = await supabase
+    .from('reservations')
+    .select('check_in_date, check_out_date')
     .eq('tenant_id', tenant.id)
-    .gte('starts_at', startOfDay)
-    .lte('starts_at', endOfDay)
+    .gte('check_in_date', startOfDay)
+    .lte('check_in_date', endOfDay)
     .in('status', ['confirmed'])
+  const booked = (bookedRaw || []).map(r => ({ starts_at: r.check_in_date, ends_at: r.check_out_date || r.check_in_date }))
 
   const slots = generateSlots(date, {
     start_time: rule.start_time,

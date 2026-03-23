@@ -57,7 +57,7 @@ export function SubscriptionPlans({ subscriptionStatus, daysLeft }: Subscription
         <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4">
           <p className="text-sm font-medium text-yellow-500">
             Пробният период изтича след {daysLeft} {daysLeft === 1 ? 'ден' : 'дни'}.
-            Изберете план, за да продължите да използвате ReceptAI.
+            Изберете план, за да продължите да използвате ReservAItion.
           </p>
         </div>
       )}

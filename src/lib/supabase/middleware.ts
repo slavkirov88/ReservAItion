@@ -24,7 +24,7 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register')
-  const isPublicApi = pathname.startsWith('/api/public') || pathname.startsWith('/api/widget') || pathname.startsWith('/api/chat') || pathname.startsWith('/api/vapi') || pathname.startsWith('/api/stripe/webhook')
+  const isPublicApi = pathname.startsWith('/api/public') || pathname.startsWith('/api/widget') || pathname.startsWith('/api/chat') || pathname.startsWith('/api/vapi') || pathname.startsWith('/api/stripe/webhook') || pathname.startsWith('/api/debug')
 
   if (!user && !isAuthPage && !isPublicApi) {
     return NextResponse.redirect(new URL('/login', request.url))
@@ -34,20 +34,24 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // Subscription gate: redirect to /subscription if cancelled or trial expired
-  if (user && !isPublicApi && !isAuthPage && pathname !== '/subscription' && !pathname.startsWith('/api/stripe')) {
+  // Onboarding + subscription gate
+  if (user && !isPublicApi && !isAuthPage && pathname !== '/onboarding' && !pathname.startsWith('/api/onboarding') && !pathname.startsWith('/api/stripe')) {
     const { data: tenant } = await supabase
       .from('tenants')
       .select('subscription_status, trial_ends_at')
       .eq('owner_id', user.id)
       .single()
 
-    if (tenant) {
+    if (!tenant) {
+      return NextResponse.redirect(new URL('/onboarding', request.url))
+    }
+
+    if (pathname !== '/subscription') {
       const isTrialExpired = tenant.subscription_status === 'trial' &&
         new Date(tenant.trial_ends_at) < new Date()
       const isCancelled = tenant.subscription_status === 'cancelled'
 
-      if ((isTrialExpired || isCancelled) && pathname !== '/subscription') {
+      if (isTrialExpired || isCancelled) {
         return NextResponse.redirect(new URL('/subscription', request.url))
       }
     }

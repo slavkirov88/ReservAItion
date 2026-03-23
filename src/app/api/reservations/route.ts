@@ -13,6 +13,7 @@ export async function GET(request: Request) {
   const status = searchParams.get('status')
   const from = searchParams.get('from')
   const to = searchParams.get('to')
+  const checkoutDate = searchParams.get('checkout_date')
   const page = parseInt(searchParams.get('page') || '1')
   const pageSize = 20
 
@@ -26,6 +27,10 @@ export async function GET(request: Request) {
   if (status) query = query.eq('status', status as 'confirmed' | 'cancelled' | 'no_show' | 'completed')
   if (from) query = query.gte('check_in_date', from)
   if (to) query = query.lte('check_in_date', to)
+  if (checkoutDate) {
+    query = query.gte('check_out_date', `${checkoutDate}T00:00:00`)
+    query = query.lte('check_out_date', `${checkoutDate}T23:59:59`)
+  }
 
   const { data, count, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

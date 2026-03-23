@@ -23,6 +23,8 @@ type Reservation = {
   status: string
   channel: string
   notes: string | null
+  room_type_id: string | null
+  room_id: string | null
 }
 
 const statusColors: Record<string, string> = {
@@ -58,12 +60,12 @@ export function ReservationTable() {
       if (toDate) params.set('to', `${toDate}T23:59:59`)
 
       const res = await fetch(`/api/reservations?${params}`)
-      if (!res.ok) throw new Error('Failed to fetch')
       const data = await res.json()
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
       setReservations(data.reservations || [])
       setTotal(data.total || 0)
     } catch (err) {
-      console.error(err)
+      console.error('ReservationTable fetch error:', err)
     } finally {
       setLoading(false)
     }
@@ -115,6 +117,7 @@ export function ReservationTable() {
             <TableRow className="border-border hover:bg-transparent">
               <TableHead className="text-muted-foreground">Check-in / Check-out</TableHead>
               <TableHead className="text-muted-foreground">Гост</TableHead>
+              <TableHead className="text-muted-foreground">Стая</TableHead>
               <TableHead className="text-muted-foreground">Канал</TableHead>
               <TableHead className="text-muted-foreground">Статус</TableHead>
               <TableHead className="w-10" />
@@ -123,11 +126,11 @@ export function ReservationTable() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-12">Зареждане...</TableCell>
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-12">Зареждане...</TableCell>
               </TableRow>
             ) : reservations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-12">Няма намерени резервации</TableCell>
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-12">Няма намерени резервации</TableCell>
               </TableRow>
             ) : reservations.map(r => (
               <TableRow key={r.id} className="border-border">
@@ -140,6 +143,15 @@ export function ReservationTable() {
                 <TableCell>
                   <p className="font-medium">{r.guest_name}</p>
                   <p className="text-xs text-muted-foreground">{r.guest_phone}</p>
+                </TableCell>
+                <TableCell className="text-sm">
+                  {r.room_id ? (
+                    <span className="text-green-400 text-xs">Назначена</span>
+                  ) : r.room_type_id ? (
+                    <span className="text-muted-foreground text-xs">Тип заявен</span>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">—</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   {r.channel === 'phone' ? (

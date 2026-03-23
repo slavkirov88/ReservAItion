@@ -15,16 +15,20 @@ export default function TodayPage() {
   const fetchData = useCallback(async () => {
     const today = format(new Date(), 'yyyy-MM-dd')
 
-    const [resRes, roomRes] = await Promise.all([
+    const [checkinsRes, checkoutsRes, roomRes] = await Promise.all([
       fetch(`/api/reservations?from=${today}T00:00:00&to=${today}T23:59:59&status=confirmed`),
+      fetch(`/api/reservations?checkout_date=${today}&status=confirmed`),
       fetch('/api/rooms'),
     ])
 
-    if (resRes.ok) {
-      const data = await resRes.json()
-      const all: ReservationRow[] = data.reservations || []
-      setCheckins(all.filter(r => r.check_in_date.startsWith(today)))
-      setCheckouts(all.filter(r => r.check_out_date?.startsWith(today)))
+    if (checkinsRes.ok) {
+      const data = await checkinsRes.json()
+      setCheckins((data.reservations || []).filter((r: ReservationRow) => r.check_in_date.startsWith(today)))
+    }
+
+    if (checkoutsRes.ok) {
+      const data = await checkoutsRes.json()
+      setCheckouts(data.reservations || [])
     }
 
     if (roomRes.ok) {

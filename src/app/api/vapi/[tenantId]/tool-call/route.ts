@@ -61,6 +61,10 @@ export async function POST(
   if (toolName === 'book_reservation') {
     const { guest_name, guest_phone, room_type, check_in_date, check_out_date } = parameters
 
+    if (!guest_name || !guest_phone || !check_in_date) {
+      return NextResponse.json({ result: 'Липсват задължителни полета: три имена, телефон и дата на настаняване.' })
+    }
+
     // Look up room_type_id from name
     const { data: roomTypeData } = await supabase
       .from('room_types')

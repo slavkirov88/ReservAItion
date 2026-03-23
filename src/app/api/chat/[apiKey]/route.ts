@@ -117,6 +117,15 @@ export async function POST(
       }
 
       if (toolCall.name === 'book_reservation') {
+        if (!args.guest_name || !args.guest_phone || !args.check_in_date) {
+          toolResults.push({
+            type: 'tool_result',
+            tool_use_id: toolCall.id,
+            content: 'Липсват задължителни полета за резервацията.',
+          })
+          continue
+        }
+
         const { data: roomTypeData } = await supabase
           .from('room_types')
           .select('id')

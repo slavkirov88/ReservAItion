@@ -5,9 +5,12 @@ import { addMinutes, parseISO, format } from 'date-fns'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { api_key, guest_name, guest_phone, service, starts_at } = body
+    const { api_key, guest_name, guest_phone, service, starts_at, check_in_date, check_out_date, room_type } = body
 
-    if (!api_key || !guest_name || !guest_phone || !service || !starts_at) {
+    const effectiveCheckin = check_in_date || starts_at
+    const effectiveCheckout = check_out_date || null
+    const effectiveService = room_type || service || null
+    if (!api_key || !guest_name || !guest_phone || !effectiveCheckin) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -21,8 +24,8 @@ export async function POST(request: Request) {
 
     if (!tenant) return NextResponse.json({ error: 'Invalid API key' }, { status: 401 })
 
-    // Get slot duration from rule
-    const startDate = parseISO(starts_at)
+    // Get slot duration from rule (kept for backward compat)
+    const startDate = parseISO(effectiveCheckin)
     const date = format(startDate, 'yyyy-MM-dd')
     const dayOfWeek = startDate.getDay()
 
@@ -38,13 +41,14 @@ export async function POST(request: Request) {
 
     const slotDuration = rule?.slot_duration_min || 30
     const endsAt = addMinutes(startDate, slotDuration).toISOString()
+    void endsAt
 
     // Check slot is still available
     const { data: existing } = await supabase
       .from('reservations')
       .select('id')
       .eq('tenant_id', tenant.id)
-      .eq('check_in_date', starts_at)
+      .eq('check_in_date', effectiveCheckin)
       .in('status', ['confirmed'])
       .single()
 
@@ -58,9 +62,9 @@ export async function POST(request: Request) {
         tenant_id: tenant.id,
         guest_name,
         guest_phone,
-        notes: service || null,
-        check_in_date: starts_at,
-        check_out_date: endsAt,
+        notes: effectiveService,
+        check_in_date: effectiveCheckin,
+        check_out_date: effectiveCheckout,
         status: 'confirmed',
         channel: 'chat',
       })
@@ -69,7 +73,7 @@ export async function POST(request: Request) {
 
     if (error) throw error
 
-    return NextResponse.json({ appointment_id: appointment.id, confirmation: 'Часът е записан успешно.' })
+    return NextResponse.json({ appointment_id: appointment.id, confirmation: 'Резервацията е потвърдена!' })
   } catch (error: unknown) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Server error' }, { status: 500 })
   }

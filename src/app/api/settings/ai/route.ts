@@ -61,12 +61,17 @@ export async function PUT(request: Request) {
         .eq('tenant_id', tenant.id)
         .single()
 
+      const { data: roomTypesData } = await supabase
+        .from('room_types')
+        .select('name, capacity, price_per_night, description')
+        .eq('tenant_id', tenant.id)
+
       await updateVapiAssistant(tenant.vapi_assistant_id, {
         id: tenant.id,
         business_name: tenant.business_name,
         languages: tenant.languages,
       }, {
-        room_types: [],
+        room_types: roomTypesData || [],
         faqs: profile?.faqs || [],
         booking_rules: profile?.booking_rules || '',
         welcome_message_bg: profile?.welcome_message_bg || 'Здравейте!',

@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'ReceptAI — AI Рецепционист',
+  title: 'ReservAItion — AI Рецепционист',
   description: 'Автоматизирайте вашата рецепция с AI',
 };
 

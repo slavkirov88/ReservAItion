@@ -70,7 +70,7 @@ export function TodayCheckinCard({ reservation, availableRooms, onCheckedIn }: P
             )}
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => setOpen(false)}>Отказ</Button>
-              <Button onClick={handleCheckin} disabled={saving || !selectedRoom}>
+              <Button onClick={handleCheckin} disabled={saving}>
                 {saving ? 'Запазване...' : 'Потвърди'}
               </Button>
             </div>

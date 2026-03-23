@@ -17,7 +17,7 @@ export async function PATCH(
   const { status } = body
 
   const { error } = await supabase
-    .from('appointments')
+    .from('reservations')
     .update({ status, updated_at: new Date().toISOString() })
     .eq('id', id)
     .eq('tenant_id', tenant.id)
