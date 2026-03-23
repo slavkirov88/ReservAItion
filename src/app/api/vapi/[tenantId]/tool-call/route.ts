@@ -61,18 +61,6 @@ export async function POST(
   if (toolName === 'book_reservation') {
     const { guest_name, guest_phone, room_type, check_in_date, check_out_date } = parameters
 
-    const { data: existing } = await supabase
-      .from('reservations')
-      .select('id')
-      .eq('tenant_id', tenantId)
-      .eq('check_in_date', check_in_date)
-      .in('status', ['confirmed'])
-      .single()
-
-    if (existing) {
-      return NextResponse.json({ result: 'Съжалявам, тази стая вече е резервирана за тези дати. Моля изберете друг тип.' })
-    }
-
     // Look up room_type_id from name
     const { data: roomTypeData } = await supabase
       .from('room_types')

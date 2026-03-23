@@ -43,7 +43,7 @@ const defaultWorkingHours: WorkingHour[] = [0, 1, 2, 3, 4, 5, 6].map(day => ({
 
 const STEPS = [
   'Профил на бизнеса',
-  'Услуги',
+  'Типове стаи',
   'Работно време',
   'ЧЗВ',
   'Готово',

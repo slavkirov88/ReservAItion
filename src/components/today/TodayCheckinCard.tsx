@@ -23,7 +23,7 @@ export function TodayCheckinCard({ reservation, availableRooms, onCheckedIn }: P
     await fetch(`/api/reservations/${reservation.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ room_id: selectedRoom }),
+      body: JSON.stringify({ room_id: selectedRoom, status: 'confirmed' }),
     })
     if (selectedRoom) {
       await fetch(`/api/rooms/${selectedRoom}`, {

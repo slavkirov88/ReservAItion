@@ -36,10 +36,12 @@ export function RoomsTab({ rooms, roomTypes, onRefresh }: Props) {
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState<{ room_number: string; name: string; room_type_id: string | null }>({ room_number: '', name: '', room_type_id: null })
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSave = async () => {
     setSaving(true)
-    await fetch('/api/rooms', {
+    setError(null)
+    const res = await fetch('/api/rooms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -50,17 +52,23 @@ export function RoomsTab({ rooms, roomTypes, onRefresh }: Props) {
       }),
     })
     setSaving(false)
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setError(data.error || 'Грешка при запазване')
+      return
+    }
     setOpen(false)
     setForm({ room_number: '', name: '', room_type_id: null })
     onRefresh()
   }
 
   const handleStatusChange = async (id: string, status: string) => {
-    await fetch(`/api/rooms/${id}`, {
+    const res = await fetch(`/api/rooms/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ table: 'rooms', status }),
     })
+    if (!res.ok) { setError('Грешка при промяна на статус'); return }
     onRefresh()
   }
 
@@ -70,10 +78,11 @@ export function RoomsTab({ rooms, roomTypes, onRefresh }: Props) {
 
   return (
     <div className="space-y-4">
+      {error && <p className="text-sm text-red-400">{error}</p>}
       <div className="flex justify-end">
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger>
-            <Button size="sm"><Plus className="h-4 w-4 mr-2" />Добави стая</Button>
+          <DialogTrigger render={<Button size="sm" />}>
+            <Plus className="h-4 w-4 mr-2" />Добави стая
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Нова стая</DialogTitle></DialogHeader>

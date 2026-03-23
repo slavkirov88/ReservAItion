@@ -102,7 +102,11 @@ export async function POST(request: Request) {
       const { assistantId } = await createVapiAssistant(
         { id: tenant.id, business_name: tenant.business_name, languages: tenant.languages || ['bg'] },
         {
-          room_types: [],
+          room_types: (roomTypes || []).map((rt: { name: string; capacity: number; price_per_night: number }) => ({
+            name: rt.name,
+            capacity: rt.capacity,
+            price_per_night: rt.price_per_night,
+          })),
           faqs: faqs || [],
           booking_rules: '',
           welcome_message_bg: 'Здравейте! Как мога да ви помогна?',

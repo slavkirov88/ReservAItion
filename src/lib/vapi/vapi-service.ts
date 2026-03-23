@@ -135,15 +135,12 @@ function buildVapiTools(tenantId: string, baseUrl: string): VapiTool[] {
     {
       type: 'function',
       function: {
-        name: 'get_available_slots',
-        description: 'Get available appointment slots for a given date',
+        name: 'get_available_room_types',
+        description: 'Get available room types with prices and capacity',
         parameters: {
           type: 'object',
-          properties: {
-            date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
-            service: { type: 'string', description: 'Service name' },
-          },
-          required: ['date'],
+          properties: {},
+          required: [],
         },
       },
       server: { url: `${baseUrl}/api/vapi/${tenantId}/tool-call` },
@@ -151,17 +148,18 @@ function buildVapiTools(tenantId: string, baseUrl: string): VapiTool[] {
     {
       type: 'function',
       function: {
-        name: 'book_appointment',
-        description: 'Book an appointment slot',
+        name: 'book_reservation',
+        description: 'Book a hotel reservation',
         parameters: {
           type: 'object',
           properties: {
-            patient_name: { type: 'string', description: 'Patient full name' },
-            patient_phone: { type: 'string', description: 'Patient phone number' },
-            service: { type: 'string', description: 'Service to book' },
-            starts_at: { type: 'string', description: 'ISO datetime' },
+            guest_name: { type: 'string', description: 'Guest full name' },
+            guest_phone: { type: 'string', description: 'Guest phone number' },
+            room_type: { type: 'string', description: 'Room type name' },
+            check_in_date: { type: 'string', description: 'Check-in date YYYY-MM-DD' },
+            check_out_date: { type: 'string', description: 'Check-out date YYYY-MM-DD' },
           },
-          required: ['patient_name', 'patient_phone', 'service', 'starts_at'],
+          required: ['guest_name', 'guest_phone', 'room_type', 'check_in_date'],
         },
       },
       server: { url: `${baseUrl}/api/vapi/${tenantId}/tool-call` },
@@ -170,7 +168,7 @@ function buildVapiTools(tenantId: string, baseUrl: string): VapiTool[] {
       type: 'function',
       function: {
         name: 'get_business_info',
-        description: 'Get business information like address, hours, services',
+        description: 'Get hotel information like address, phone, room types',
         parameters: {
           type: 'object',
           properties: {

@@ -15,7 +15,7 @@ export async function PATCH(
 
   const { status, room_id } = await request.json()
 
-  const update: Record<string, string> = { updated_at: new Date().toISOString() }
+  const update: Record<string, string | null> = { updated_at: new Date().toISOString() }
   if (status) update.status = status
   if (room_id !== undefined) update.room_id = room_id
 

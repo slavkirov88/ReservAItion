@@ -18,13 +18,15 @@ export function RoomTypesTab({ roomTypes, onRefresh }: Props) {
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ name: '', description: '', capacity: '2', price_per_night: '' })
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [editOpen, setEditOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<RoomTypeRow | null>(null)
   const [editForm, setEditForm] = useState({ name: '', description: '', capacity: '2', price_per_night: '' })
 
   const handleSave = async () => {
     setSaving(true)
-    await fetch('/api/rooms', {
+    setError(null)
+    const res = await fetch('/api/rooms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -36,6 +38,11 @@ export function RoomTypesTab({ roomTypes, onRefresh }: Props) {
       }),
     })
     setSaving(false)
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setError(data.error || 'Грешка при запазване')
+      return
+    }
     setOpen(false)
     setForm({ name: '', description: '', capacity: '2', price_per_night: '' })
     onRefresh()
@@ -43,7 +50,8 @@ export function RoomTypesTab({ roomTypes, onRefresh }: Props) {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Изтрий този тип стая?')) return
-    await fetch(`/api/rooms/${id}?table=room_types`, { method: 'DELETE' })
+    const res = await fetch(`/api/rooms/${id}?table=room_types`, { method: 'DELETE' })
+    if (!res.ok) { setError('Грешка при изтриване'); return }
     onRefresh()
   }
 
@@ -61,7 +69,8 @@ export function RoomTypesTab({ roomTypes, onRefresh }: Props) {
   const handleEdit = async () => {
     if (!editTarget) return
     setSaving(true)
-    await fetch(`/api/rooms/${editTarget.id}`, {
+    setError(null)
+    const res = await fetch(`/api/rooms/${editTarget.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -73,16 +82,18 @@ export function RoomTypesTab({ roomTypes, onRefresh }: Props) {
       }),
     })
     setSaving(false)
+    if (!res.ok) { setError('Грешка при редактиране'); return }
     setEditOpen(false)
     onRefresh()
   }
 
   return (
     <div className="space-y-4">
+      {error && <p className="text-sm text-red-400">{error}</p>}
       <div className="flex justify-end">
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger>
-            <Button size="sm"><Plus className="h-4 w-4 mr-2" />Добави тип</Button>
+          <DialogTrigger render={<Button size="sm" />}>
+            <Plus className="h-4 w-4 mr-2" />Добави тип
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Нов тип стая</DialogTitle></DialogHeader>
