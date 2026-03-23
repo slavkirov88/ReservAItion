@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { addMinutes, parseISO, format } from 'date-fns'
 
 export async function POST(request: Request) {
   try {
@@ -23,25 +22,6 @@ export async function POST(request: Request) {
       .single()
 
     if (!tenant) return NextResponse.json({ error: 'Invalid API key' }, { status: 401 })
-
-    // Get slot duration from rule (kept for backward compat)
-    const startDate = parseISO(effectiveCheckin)
-    const date = format(startDate, 'yyyy-MM-dd')
-    const dayOfWeek = startDate.getDay()
-
-    // Suppress unused variable warning - date is used implicitly via dayOfWeek context
-    void date
-
-    const { data: rule } = await supabase
-      .from('schedule_rules')
-      .select('slot_duration_min')
-      .eq('tenant_id', tenant.id)
-      .eq('day_of_week', dayOfWeek)
-      .single()
-
-    const slotDuration = rule?.slot_duration_min || 30
-    const endsAt = addMinutes(startDate, slotDuration).toISOString()
-    void endsAt
 
     // Check slot is still available
     const { data: existing } = await supabase

@@ -12,14 +12,21 @@ interface Props {
 
 export function TodayCheckoutCard({ reservation, onCheckedOut }: Props) {
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleCheckout = async () => {
     setSaving(true)
-    await fetch(`/api/reservations/${reservation.id}`, {
+    setError(null)
+    const res = await fetch(`/api/reservations/${reservation.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'completed' }),
     })
+    if (!res.ok) {
+      setSaving(false)
+      setError('Грешка при освобождаване. Опитайте отново.')
+      return
+    }
     if (reservation.room_id) {
       await fetch(`/api/rooms/${reservation.room_id}`, {
         method: 'PATCH',
@@ -40,9 +47,12 @@ export function TodayCheckoutCard({ reservation, onCheckedOut }: Props) {
           от {format(new Date(reservation.check_in_date), 'dd MMM', { locale: bg })}
         </p>
       </div>
-      <Button size="sm" variant="outline" onClick={handleCheckout} disabled={saving}>
-        {saving ? '...' : 'Освободи стая'}
-      </Button>
+      <div className="flex flex-col items-end gap-1">
+        {error && <p className="text-xs text-red-400">{error}</p>}
+        <Button size="sm" variant="outline" onClick={handleCheckout} disabled={saving}>
+          {saving ? '...' : 'Освободи стая'}
+        </Button>
+      </div>
     </div>
   )
 }

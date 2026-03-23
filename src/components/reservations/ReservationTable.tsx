@@ -74,11 +74,12 @@ export function ReservationTable() {
   useEffect(() => { fetchReservations() }, [fetchReservations])
 
   const updateStatus = async (id: string, status: string) => {
-    await fetch(`/api/reservations/${id}`, {
+    const res = await fetch(`/api/reservations/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     })
+    if (!res.ok) return
     await fetchReservations()
   }
 

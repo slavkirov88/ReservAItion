@@ -17,14 +17,21 @@ export function TodayCheckinCard({ reservation, availableRooms, onCheckedIn }: P
   const [open, setOpen] = useState(false)
   const [selectedRoom, setSelectedRoom] = useState('')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleCheckin = async () => {
     setSaving(true)
-    await fetch(`/api/reservations/${reservation.id}`, {
+    setError(null)
+    const res = await fetch(`/api/reservations/${reservation.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ room_id: selectedRoom, status: 'confirmed' }),
+      body: JSON.stringify({ room_id: selectedRoom || null, status: 'confirmed' }),
     })
+    if (!res.ok) {
+      setSaving(false)
+      setError('Грешка при настаняване. Опитайте отново.')
+      return
+    }
     if (selectedRoom) {
       await fetch(`/api/rooms/${selectedRoom}`, {
         method: 'PATCH',
@@ -54,6 +61,7 @@ export function TodayCheckinCard({ reservation, availableRooms, onCheckedIn }: P
         <DialogContent>
           <DialogHeader><DialogTitle>Настани {reservation.guest_name}</DialogTitle></DialogHeader>
           <div className="space-y-4">
+            {error && <p className="text-sm text-red-400">{error}</p>}
             {availableRooms.length === 0 ? (
               <p className="text-sm text-muted-foreground">Няма свободни стаи. Назначете стая след освобождаване.</p>
             ) : (
