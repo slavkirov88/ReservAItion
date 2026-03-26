@@ -79,6 +79,50 @@ export type RoomTypeRow = {
   created_at: string
 }
 
+export type SeasonalPricingRow = {
+  id: string
+  tenant_id: string
+  room_type_id: string
+  label: string
+  start_date: string  // YYYY-MM-DD
+  end_date: string    // YYYY-MM-DD
+  price_per_night: number
+  created_at: string
+}
+
+export type SeasonalPricingInsert = {
+  id?: string
+  tenant_id: string
+  room_type_id: string
+  label: string
+  start_date: string
+  end_date: string
+  price_per_night: number
+}
+
+export type SeasonalPricingUpdate = Partial<Omit<SeasonalPricingInsert, 'id' | 'tenant_id'>>
+
+export type BlockedDateRow = {
+  id: string
+  tenant_id: string
+  room_type_id: string | null  // null = all room types
+  start_date: string           // YYYY-MM-DD
+  end_date: string             // YYYY-MM-DD
+  reason: string | null
+  created_at: string
+}
+
+export type BlockedDateInsert = {
+  id?: string
+  tenant_id: string
+  room_type_id?: string | null
+  start_date: string
+  end_date: string
+  reason?: string | null
+}
+
+export type BlockedDateUpdate = Partial<Omit<BlockedDateInsert, 'id' | 'tenant_id'>>
+
 export type RoomRow = {
   id: string
   tenant_id: string
@@ -101,6 +145,7 @@ export type ReservationRow = {
   status: 'confirmed' | 'cancelled' | 'no_show' | 'completed'
   channel: 'phone' | 'chat' | 'manual'
   notes: string | null
+  external_uid: string | null
   created_at: string
   updated_at: string
 }
@@ -238,6 +283,8 @@ export type RoomType = RoomTypeRow
 export type Room = RoomRow
 export type Reservation = ReservationRow
 export type Conversation = ConversationRow
+export type SeasonalPricing = SeasonalPricingRow
+export type BlockedDate = BlockedDateRow
 
 // Supabase Database type
 export type Database = {
@@ -251,6 +298,8 @@ export type Database = {
       rooms: { Row: RoomRow; Insert: RoomInsert; Update: RoomUpdate; Relationships: [] }
       reservations: { Row: ReservationRow; Insert: ReservationInsert; Update: ReservationUpdate; Relationships: [] }
       conversations: { Row: ConversationRow; Insert: ConversationInsert; Update: ConversationUpdate; Relationships: [] }
+      seasonal_pricing: { Row: SeasonalPricingRow; Insert: SeasonalPricingInsert; Update: SeasonalPricingUpdate; Relationships: [] }
+      blocked_dates: { Row: BlockedDateRow; Insert: BlockedDateInsert; Update: BlockedDateUpdate; Relationships: [] }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
