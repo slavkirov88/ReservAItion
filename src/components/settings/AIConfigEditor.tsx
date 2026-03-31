@@ -5,8 +5,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, RefreshCw, CheckCircle, XCircle, Copy } from 'lucide-react'
 import type { FAQ } from '@/types/database'
+import { WebsiteScanner } from '@/components/settings/WebsiteScanner'
+
+interface VapiStatus {
+  tenant_id: string
+  vapi_assistant_id: string | null
+  vapi_phone_number: string | null
+}
 
 interface AIConfig {
   welcome_message_bg: string
@@ -25,16 +32,42 @@ export function AIConfigEditor() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [vapi, setVapi] = useState<VapiStatus | null>(null)
+  const [regenerating, setRegenerating] = useState(false)
+  const [copied, setCopied] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/settings/ai')
-      .then(r => r.json())
-      .then((d: Partial<AIConfig>) => {
-        setConfig(c => ({ ...c, ...d, faqs: d.faqs || [] }))
-        setLoading(false)
-      })
-      .catch(() => setLoading(false))
+    Promise.all([
+      fetch('/api/settings/ai').then(r => r.json()),
+      fetch('/api/settings/vapi').then(r => r.json()),
+    ]).then(([ai, vapiData]: [Partial<AIConfig>, VapiStatus]) => {
+      setConfig(c => ({ ...c, ...ai, faqs: ai.faqs || [] }))
+      setVapi(vapiData)
+      setLoading(false)
+    }).catch(() => setLoading(false))
   }, [])
+
+  async function handleRegenerate() {
+    setRegenerating(true)
+    setMessage(null)
+    try {
+      const res = await fetch('/api/settings/vapi', { method: 'POST' })
+      const data = await res.json() as { vapi_assistant_id?: string; error?: string }
+      if (!res.ok) throw new Error(data.error || 'Грешка')
+      setVapi(v => v ? { ...v, vapi_assistant_id: data.vapi_assistant_id || null } : v)
+      setMessage({ type: 'success', text: 'AI асистентът е пресъздаден успешно!' })
+    } catch (e) {
+      setMessage({ type: 'error', text: e instanceof Error ? e.message : 'Грешка' })
+    } finally {
+      setRegenerating(false)
+    }
+  }
+
+  function copyToClipboard(value: string, key: string) {
+    navigator.clipboard.writeText(value)
+    setCopied(key)
+    setTimeout(() => setCopied(null), 2000)
+  }
 
   function addFaq() {
     setConfig(c => ({ ...c, faqs: [...c.faqs, { question: '', answer: '' }] }))
@@ -73,6 +106,69 @@ export function AIConfigEditor() {
 
   return (
     <div className="space-y-6">
+
+      {/* Vapi Status */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base">AI Асистент</CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRegenerate}
+            disabled={regenerating}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${regenerating ? 'animate-spin' : ''}`} />
+            {regenerating ? 'Създаване...' : 'Пресъздай асистент'}
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {vapi ? (
+            <>
+              <div className="flex items-center justify-between rounded-md border px-3 py-2">
+                <div>
+                  <p className="text-xs text-muted-foreground">Tenant ID</p>
+                  <p className="text-sm font-mono">{vapi.tenant_id}</p>
+                </div>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyToClipboard(vapi.tenant_id, 'tenant')}>
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+                {copied === 'tenant' && <span className="text-xs text-green-500 ml-1">Копирано!</span>}
+              </div>
+
+              <div className="flex items-center justify-between rounded-md border px-3 py-2">
+                <div className="flex items-center gap-2">
+                  {vapi.vapi_assistant_id
+                    ? <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                    : <XCircle className="h-4 w-4 text-red-500 shrink-0" />}
+                  <div>
+                    <p className="text-xs text-muted-foreground">Assistant ID</p>
+                    <p className="text-sm font-mono">{vapi.vapi_assistant_id ?? 'Не е създаден'}</p>
+                  </div>
+                </div>
+                {vapi.vapi_assistant_id && (
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyToClipboard(vapi.vapi_assistant_id!, 'assistant')}>
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+                {copied === 'assistant' && <span className="text-xs text-green-500 ml-1">Копирано!</span>}
+              </div>
+
+              <div className="flex items-center gap-2 rounded-md border px-3 py-2">
+                {vapi.vapi_phone_number
+                  ? <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                  : <XCircle className="h-4 w-4 text-yellow-500 shrink-0" />}
+                <div>
+                  <p className="text-xs text-muted-foreground">Телефонен номер</p>
+                  <p className="text-sm">{vapi.vapi_phone_number ?? 'Не е свързан — свържи се с поддръжката'}</p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">Зареждане...</p>
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Приветствено съобщение</CardTitle>
@@ -151,6 +247,8 @@ export function AIConfigEditor() {
       <Button onClick={handleSave} disabled={saving}>
         {saving ? 'Запазване...' : 'Запази промените'}
       </Button>
+
+      <WebsiteScanner />
     </div>
   )
 }
