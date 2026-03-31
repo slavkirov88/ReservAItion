@@ -1,7 +1,10 @@
+export const runtime = 'nodejs'
+
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { generateSystemPrompt } from '@/lib/ai/prompt-generator'
 import Anthropic from '@anthropic-ai/sdk'
+import { getAvailableRoomTypes, formatAvailabilityBg } from '@/lib/availability'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder' })
 
@@ -13,11 +16,14 @@ interface MessageParam {
 const tools: Anthropic.Tool[] = [
   {
     name: 'get_available_room_types',
-    description: 'Get available room types with prices and capacity',
+    description: 'Check which room types are available for specific dates. Always call this when the guest asks about availability or wants to book.',
     input_schema: {
       type: 'object' as const,
-      properties: {},
-      required: [],
+      properties: {
+        check_in_date: { type: 'string', description: 'Check-in date YYYY-MM-DD' },
+        check_out_date: { type: 'string', description: 'Check-out date YYYY-MM-DD' },
+      },
+      required: ['check_in_date', 'check_out_date'],
     },
   },
   {
@@ -103,17 +109,21 @@ export async function POST(
       const args = toolCall.input as Record<string, string>
 
       if (toolCall.name === 'get_available_room_types') {
-        const { data: roomTypes } = await supabase
-          .from('room_types')
-          .select('name, capacity, price_per_night')
-          .eq('tenant_id', tenant.id)
-
-        const list = roomTypes?.map(r => `${r.name}: до ${r.capacity} гости, ${r.price_per_night} лв/нощ`).join('; ')
-        toolResults.push({
-          type: 'tool_result',
-          tool_use_id: toolCall.id,
-          content: list ? `Налични стаи: ${list}` : 'Няма налични стаи.',
-        })
+        const { check_in_date, check_out_date } = args
+        if (!check_in_date || !check_out_date) {
+          toolResults.push({
+            type: 'tool_result',
+            tool_use_id: toolCall.id,
+            content: 'Моля уточнете датите на настаняване и напускане.',
+          })
+        } else {
+          const available = await getAvailableRoomTypes(supabase, tenant.id, check_in_date, check_out_date)
+          toolResults.push({
+            type: 'tool_result',
+            tool_use_id: toolCall.id,
+            content: formatAvailabilityBg(available, check_in_date, check_out_date),
+          })
+        }
       }
 
       if (toolCall.name === 'book_reservation') {
@@ -128,10 +138,24 @@ export async function POST(
 
         const { data: roomTypeData } = await supabase
           .from('room_types')
-          .select('id')
+          .select('id, name')
           .eq('tenant_id', tenant.id)
           .ilike('name', args.room_type || '')
           .single()
+
+        // Check real availability before booking
+        if (args.check_out_date) {
+          const available = await getAvailableRoomTypes(supabase, tenant.id, args.check_in_date, args.check_out_date)
+          const requestedType = available.find(r => roomTypeData ? r.id === roomTypeData.id : true)
+          if (roomTypeData && !requestedType) {
+            toolResults.push({
+              type: 'tool_result',
+              tool_use_id: toolCall.id,
+              content: `За съжаление ${roomTypeData.name} е заета за ${args.check_in_date} – ${args.check_out_date}. ${available.length > 0 ? `Свободни са: ${available.map(r => r.name).join(', ')}.` : 'Няма свободни стаи за този период.'}`,
+            })
+            continue
+          }
+        }
 
         const { data: reservation, error } = await supabase
           .from('reservations')
