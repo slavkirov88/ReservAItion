@@ -12,6 +12,12 @@ import {
   CreditCard,
   Bot,
   Menu,
+  User,
+  Cpu,
+  Code2,
+  Plug,
+  ChevronDown,
+  BarChart2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -21,12 +27,21 @@ const navItems = [
   { href: '/today', label: 'Днес', icon: Sun },
   { href: '/reservations', label: 'Резервации', icon: CalendarDays },
   { href: '/rooms', label: 'Стаи', icon: BedDouble },
-  { href: '/settings/profile', label: 'Настройки', icon: Settings },
+  { href: '/analytics', label: 'Анализи', icon: BarChart2 },
   { href: '/subscription', label: 'Абонамент', icon: CreditCard },
+]
+
+const settingsItems = [
+  { href: '/settings/profile', label: 'Профил', icon: User },
+  { href: '/settings/ai', label: 'AI Асистент', icon: Cpu },
+  { href: '/settings/widget', label: 'Chat Widget', icon: Code2 },
+  { href: '/settings/integrations', label: 'Интеграции', icon: Plug },
 ]
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname()
+  const inSettings = pathname.startsWith('/settings')
+
   return (
     <nav className="flex flex-col gap-1 p-4">
       {navItems.map(({ href, label, icon: Icon }) => (
@@ -45,6 +60,36 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           {label}
         </Link>
       ))}
+
+      {/* Settings group */}
+      <div>
+        <div className={cn(
+          'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium',
+          inSettings ? 'text-foreground' : 'text-muted-foreground'
+        )}>
+          <Settings className="h-4 w-4" />
+          Настройки
+          <ChevronDown className="h-3 w-3 ml-auto" />
+        </div>
+        <div className="ml-4 mt-1 flex flex-col gap-1">
+          {settingsItems.map(({ href, label, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              onClick={onNavigate}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
+                pathname === href
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </Link>
+          ))}
+        </div>
+      </div>
     </nav>
   )
 }
