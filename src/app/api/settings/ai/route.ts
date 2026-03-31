@@ -39,7 +39,7 @@ export async function PUT(request: Request) {
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, business_name, languages, address, vapi_assistant_id')
+    .select('id, business_name, languages, address, vapi_assistant_id, website_content')
     .eq('owner_id', user.id)
     .single()
 
@@ -76,6 +76,7 @@ export async function PUT(request: Request) {
         booking_rules: profile?.booking_rules || '',
         welcome_message_bg: profile?.welcome_message_bg || 'Здравейте!',
         address: tenant.address || '',
+        website_content: tenant.website_content || undefined,
       })
     } catch {
       // Non-fatal

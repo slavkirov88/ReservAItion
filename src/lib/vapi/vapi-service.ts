@@ -12,6 +12,7 @@ export interface VapiProfile {
   booking_rules: string
   welcome_message_bg: string
   address: string
+  website_content?: string
 }
 
 export async function createVapiAssistant(
@@ -25,6 +26,7 @@ export async function createVapiAssistant(
     faqs: profile.faqs || [],
     booking_rules: profile.booking_rules || '',
     welcome_message_bg: profile.welcome_message_bg,
+    website_content: profile.website_content || undefined,
   }, tenant.languages || ['bg'])
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -39,7 +41,7 @@ export async function createVapiAssistant(
       name: `ReservAItion - ${tenant.business_name}`,
       voice: {
         provider: 'azure',
-        voiceId: 'bg-BG-BorislavNeural',
+        voiceId: 'bg-BG-KalinaNeural',
       },
       transcriber: {
         provider: 'deepgram',
@@ -77,6 +79,7 @@ export async function updateVapiAssistant(
     faqs: profile.faqs || [],
     booking_rules: profile.booking_rules || '',
     welcome_message_bg: profile.welcome_message_bg,
+    website_content: profile.website_content || undefined,
   }, tenant.languages || ['bg'])
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -88,6 +91,10 @@ export async function updateVapiAssistant(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
+      voice: {
+        provider: 'azure',
+        voiceId: 'bg-BG-KalinaNeural',
+      },
       model: {
         provider: 'openai',
         model: 'gpt-4o-mini',
@@ -136,11 +143,14 @@ function buildVapiTools(tenantId: string, baseUrl: string): VapiTool[] {
       type: 'function',
       function: {
         name: 'get_available_room_types',
-        description: 'Get available room types with prices and capacity',
+        description: 'Check which room types are available for specific dates. Always call this when the guest asks about availability or wants to book.',
         parameters: {
           type: 'object',
-          properties: {},
-          required: [],
+          properties: {
+            check_in_date: { type: 'string', description: 'Check-in date YYYY-MM-DD' },
+            check_out_date: { type: 'string', description: 'Check-out date YYYY-MM-DD' },
+          },
+          required: ['check_in_date', 'check_out_date'],
         },
       },
       server: { url: `${baseUrl}/api/vapi/${tenantId}/tool-call` },

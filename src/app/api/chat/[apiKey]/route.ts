@@ -58,7 +58,7 @@ export async function POST(
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, business_name, languages, address')
+    .select('id, business_name, languages, address, website_content')
     .eq('public_api_key', apiKey)
     .single()
 
@@ -82,6 +82,7 @@ export async function POST(
     faqs: profile?.faqs || [],
     booking_rules: profile?.booking_rules || '',
     welcome_message_bg: profile?.welcome_message_bg || 'Здравейте!',
+    website_content: tenant.website_content || undefined,
   }, tenant.languages || ['bg'])
 
   const messages: Anthropic.MessageParam[] = [
