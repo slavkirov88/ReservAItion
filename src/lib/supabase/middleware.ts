@@ -36,7 +36,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Onboarding + subscription gate
-  if (user && !isPublicApi && !isAuthPage && pathname !== '/onboarding' && !pathname.startsWith('/api/onboarding') && !pathname.startsWith('/api/stripe')) {
+  if (user && !isPublicApi && !isAuthPage && !isLandingPage && pathname !== '/onboarding' && !pathname.startsWith('/api/onboarding') && !pathname.startsWith('/api/stripe')) {
     const { data: tenant } = await supabase
       .from('tenants')
       .select('subscription_status, trial_ends_at')
