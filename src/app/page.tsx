@@ -494,14 +494,21 @@ export default function LandingPage() {
 
       {/* FOOTER */}
       <footer className="border-t border-white/5 py-8 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-white/20">
-          <div>
-            <span className="font-bold text-white/50">Reserv<span className="text-violet-400">AI</span>tion</span>
-            {' '}— {t.footer.tagline}
+        <div className="max-w-7xl mx-auto flex flex-col gap-4 text-sm text-white/20">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <span className="font-bold text-white/50">Reserv<span className="text-violet-400">AI</span>tion</span>
+              {' '}— {t.footer.tagline}
+            </div>
+            <div className="flex gap-6">
+              <Link href="/login" className="hover:text-white/50 transition-colors">{t.nav.login}</Link>
+              <Link href="/privacy" className="hover:text-white/50 transition-colors">Privacy</Link>
+              <Link href="/refund-policy" className="hover:text-white/50 transition-colors">Refund Policy</Link>
+              <Link href="/terms" className="hover:text-white/50 transition-colors">Terms</Link>
+            </div>
           </div>
-          <div className="flex gap-6">
-            <Link href="/login" className="hover:text-white/50 transition-colors">{t.nav.login}</Link>
-            <Link href="/privacy" className="hover:text-white/50 transition-colors">Privacy</Link>
+          <div className="text-center sm:text-left text-white/10 text-xs">
+            СЛАМАР ЕООД · ЕИК: [въведи ЕИК] · ул. [въведи адрес] · support@reservaition.com
           </div>
         </div>
       </footer>
