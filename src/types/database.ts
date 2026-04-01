@@ -31,6 +31,11 @@ export type TenantRow = {
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   trial_ends_at: string
+  bank_iban: string | null
+  bank_name: string | null
+  company_name: string | null
+  company_address: string | null
+  deposit_percent: number
   created_at: string
   updated_at: string
 }
@@ -142,10 +147,14 @@ export type ReservationRow = {
   room_id: string | null
   check_in_date: string
   check_out_date: string | null
-  status: 'confirmed' | 'cancelled' | 'no_show' | 'completed'
+  status: 'confirmed' | 'cancelled' | 'no_show' | 'completed' | 'pending_payment'
   channel: 'phone' | 'chat' | 'manual'
   notes: string | null
   external_uid: string | null
+  guest_email: string | null
+  total_amount: number | null
+  deposit_amount: number | null
+  deposit_expires_at: string | null
   created_at: string
   updated_at: string
 }
@@ -178,6 +187,11 @@ export type TenantInsert = {
   stripe_customer_id?: string | null
   stripe_subscription_id?: string | null
   trial_ends_at?: string
+  bank_iban?: string | null
+  bank_name?: string | null
+  company_name?: string | null
+  company_address?: string | null
+  deposit_percent?: number
   created_at?: string
   updated_at?: string
 }
@@ -245,9 +259,13 @@ export type ReservationInsert = {
   room_id?: string | null
   check_in_date: string
   check_out_date?: string | null
-  status?: 'confirmed' | 'cancelled' | 'no_show' | 'completed'
+  status?: 'confirmed' | 'cancelled' | 'no_show' | 'completed' | 'pending_payment'
   channel: 'phone' | 'chat' | 'manual'
   notes?: string | null
+  guest_email?: string | null
+  total_amount?: number | null
+  deposit_amount?: number | null
+  deposit_expires_at?: string | null
   created_at?: string
   updated_at?: string
 }
