@@ -15,15 +15,15 @@ interface SubscriptionPlansProps {
 const PLANS_UI = [
   {
     key: 'starter' as PlanKey,
-    name: 'Стартов',
-    price: 149,
-    features: ['1 телефонен номер', 'Неограничени обаждания', 'Чат уиджет', 'Базово табло'],
+    name: 'Стартер',
+    price: '€49',
+    features: ['AI чат на сайта', 'Управление на резервации', 'До 3 типа стаи', 'Имейл известия'],
   },
   {
     key: 'pro' as PlanKey,
-    name: 'Pro',
-    price: 299,
-    features: ['3 телефонни номера', 'Приоритетна поддръжка', 'Разширена аналитика', 'API достъп'],
+    name: 'Про',
+    price: '€99',
+    features: ['AI телефон 24/7 на Български', 'iCal sync (Booking/Airbnb)', 'Сезонни цени', 'Блокирани дати', 'Телефонен номер включен'],
     recommended: true,
   },
 ]
@@ -92,7 +92,7 @@ export function SubscriptionPlans({ subscriptionStatus, daysLeft }: Subscription
                 <CardTitle className="text-lg">{plan.name}</CardTitle>
                 {plan.recommended && <Badge>Препоръчан</Badge>}
               </div>
-              <div className="text-3xl font-bold">{plan.price} лв<span className="text-sm font-normal text-muted-foreground">/мес</span></div>
+              <div className="text-3xl font-bold">{plan.price}<span className="text-sm font-normal text-muted-foreground">/мес</span></div>
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="space-y-2">
