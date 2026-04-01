@@ -15,9 +15,11 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
+  const isAdmin = user.email === (process.env.ADMIN_EMAIL || '')
+
   return (
     <div className="flex h-screen bg-background">
-      <AppSidebar />
+      <AppSidebar isAdmin={isAdmin} />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header />
         <main className="flex-1 overflow-y-auto p-6">

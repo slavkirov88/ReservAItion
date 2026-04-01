@@ -18,6 +18,7 @@ import {
   Plug,
   ChevronDown,
   BarChart2,
+  ShieldCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -38,7 +39,7 @@ const settingsItems = [
   { href: '/settings/integrations', label: 'Интеграции', icon: Plug },
 ]
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+function NavLinks({ onNavigate, isAdmin }: { onNavigate?: () => void; isAdmin?: boolean }) {
   const pathname = usePathname()
   const inSettings = pathname.startsWith('/settings')
 
@@ -60,6 +61,23 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           {label}
         </Link>
       ))}
+
+      {/* Admin link */}
+      {isAdmin && (
+        <Link
+          href="/admin/analytics"
+          onClick={onNavigate}
+          className={cn(
+            'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+            pathname.startsWith('/admin')
+              ? 'bg-primary text-primary-foreground'
+              : 'text-amber-400 hover:text-amber-300 hover:bg-accent'
+          )}
+        >
+          <ShieldCheck className="h-4 w-4" />
+          Админ
+        </Link>
+      )}
 
       {/* Settings group */}
       <div>
@@ -94,23 +112,23 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
-function SidebarContent() {
+function SidebarContent({ isAdmin }: { isAdmin?: boolean }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 px-6 py-5 border-b border-border">
         <Bot className="h-6 w-6 text-primary" />
         <span className="font-semibold text-lg">ReservAItion</span>
       </div>
-      <NavLinks />
+      <NavLinks isAdmin={isAdmin} />
     </div>
   )
 }
 
-export function AppSidebar() {
+export function AppSidebar({ isAdmin }: { isAdmin?: boolean }) {
   return (
     <>
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card h-screen sticky top-0">
-        <SidebarContent />
+        <SidebarContent isAdmin={isAdmin} />
       </aside>
       <Sheet>
         <SheetTrigger
@@ -119,7 +137,7 @@ export function AppSidebar() {
           <Menu className="h-5 w-5" />
         </SheetTrigger>
         <SheetContent side="left" className="w-64 p-0">
-          <SidebarContent />
+          <SidebarContent isAdmin={isAdmin} />
         </SheetContent>
       </Sheet>
     </>

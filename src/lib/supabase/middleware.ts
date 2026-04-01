@@ -35,8 +35,11 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
+  // Admin bypasses all gates
+  const isAdmin = user?.email === (process.env.ADMIN_EMAIL || '')
+
   // Onboarding + subscription gate
-  if (user && !isPublicApi && !isAuthPage && !isLandingPage && pathname !== '/onboarding' && !pathname.startsWith('/api/onboarding') && !pathname.startsWith('/api/stripe')) {
+  if (user && !isAdmin && !isPublicApi && !isAuthPage && !isLandingPage && pathname !== '/onboarding' && !pathname.startsWith('/api/onboarding') && !pathname.startsWith('/api/stripe')) {
     const { data: tenant } = await supabase
       .from('tenants')
       .select('subscription_status, trial_ends_at')
