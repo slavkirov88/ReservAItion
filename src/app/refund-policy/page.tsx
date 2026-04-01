@@ -3,7 +3,7 @@ export default function RefundPolicy() {
     <main className="min-h-screen bg-[#0a0a0f] text-white/80 px-4 py-16">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold text-white mb-2">Refund & Cancellation Policy</h1>
-        <p className="text-white/30 text-sm mb-10">СЛАМАР ЕООД · ReservAItion</p>
+        <p className="text-white/30 text-sm mb-10">СЛАМАР ЕООД · ЕИК 208287248 · гр. Черноморец (8142), жк. месност „АКЛАДИ", ет. 2, ап. 222, България</p>
 
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-white mb-2">Subscriptions</h2>

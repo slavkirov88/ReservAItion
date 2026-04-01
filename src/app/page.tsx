@@ -508,7 +508,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="text-center sm:text-left text-white/10 text-xs">
-            СЛАМАР ЕООД · ЕИК: [въведи ЕИК] · ул. [въведи адрес] · support@reservaition.com
+            СЛАМАР ЕООД · ЕИК 208287248 · гр. Черноморец (8142), жк. месност „АКЛАДИ", ет. 2, ап. 222, България · support@reservaition.com
           </div>
         </div>
       </footer>
