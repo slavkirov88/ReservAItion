@@ -99,7 +99,7 @@ export async function getAvailableRoomTypes(
     .from('reservations')
     .select('room_type_id')
     .eq('tenant_id', tenantId)
-    .in('status', ['confirmed'])
+    .in('status', ['confirmed', 'pending_payment'])
     .lt('check_in_date', checkOut)
     .or(`check_out_date.is.null,check_out_date.gt.${checkIn}`)
 
