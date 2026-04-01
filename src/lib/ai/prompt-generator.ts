@@ -20,7 +20,14 @@ export interface HotelProfile {
   website_content?: string
 }
 
-export function generateSystemPrompt(profile: HotelProfile, languages: string[]): string {
+export function generateSystemPrompt(profile: HotelProfile, languages: string[], currentDate?: string): string {
+  const todayBg = currentDate ?? new Date().toLocaleDateString('bg-BG', {
+    timeZone: 'Europe/Sofia',
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  })
+  const todayIso = currentDate
+    ? currentDate
+    : new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Sofia' })
   const roomTypesText = profile.room_types
     .map(r => `- ${r.name}: до ${r.capacity} гости, ${r.price_per_night} €/нощ${r.description ? ` (${r.description})` : ''}`)
     .join('\n')
@@ -34,6 +41,7 @@ export function generateSystemPrompt(profile: HotelProfile, languages: string[])
     : 'Говори само на български.'
 
   return `Ти си Мария — телефонен асистент на ${profile.business_name}.${profile.address ? ` Намираме се на ${profile.address}.` : ''}
+ТЕКУЩА ДАТА: ${todayBg} (${todayIso})
 
 ЛИЧНОСТ И СТИЛ:
 - Говориш топло, естествено и на изчистен български — като истински човек, не като робот
@@ -52,12 +60,14 @@ ${roomTypesText ? `СТАИ И ЦЕНИ:\n${roomTypesText}\n` : ''}${faqsText ? 
 5. Потвърди с: "Записах ви! Очакваме ви на [дата]. Ако имате въпроси, обадете се пак."
 
 КОНВЕРТИРАНЕ НА ДАТИ — ЗАДЪЛЖИТЕЛНО:
-- Форматът за инструментите е винаги YYYY-MM-DD. Текущата година е ${new Date().getFullYear()}.
-- "дд.мм" или "дд месец" → YYYY-MM-DD (пример: "15 април" → "${new Date().getFullYear()}-04-15")
+- Форматът за инструментите е винаги YYYY-MM-DD.
+- Когато не знаеш текущата дата или година, ПЪРВО извикай get_current_date за да разбереш.
+- "дд.мм" или "дд месец" → YYYY-MM-DD (пример: "15 април" → ГОДИНА-04-15, където ГОДИНА взимаш от get_current_date)
 - Ако гостът каже само месец без конкретна дата (пример: "за април", "през юли"):
+  → Извикай get_current_date, вземи годината
   → Използвай първия ден на месеца като check_in и последния ден като check_out
-  → Пример: "за април" → check_in="${new Date().getFullYear()}-04-01", check_out="${new Date().getFullYear()}-04-30"
-  → Пример: "за юли" → check_in="${new Date().getFullYear()}-07-01", check_out="${new Date().getFullYear()}-07-31"
+  → Пример: "за април 2026" → check_in="2026-04-01", check_out="2026-04-30"
+  → Пример: "за юли" → check_in="ГОДИНА-07-01", check_out="ГОДИНА-07-31"
 - Никога не изпращай нечислов текст като дата на инструментите — само YYYY-MM-DD
 
 ВАЖНИ ПРАВИЛА:

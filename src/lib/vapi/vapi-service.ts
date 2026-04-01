@@ -177,6 +177,19 @@ function buildVapiTools(tenantId: string, baseUrl: string): VapiTool[] {
     {
       type: 'function',
       function: {
+        name: 'get_current_date',
+        description: 'Returns the current date and year in Bulgarian time (Europe/Sofia). Call this whenever you need to know today\'s date, the current year, or to calculate dates like "next week" or "this month".',
+        parameters: {
+          type: 'object',
+          properties: {},
+          required: [],
+        },
+      },
+      server: { url: `${baseUrl}/api/vapi/${tenantId}/tool-call` },
+    },
+    {
+      type: 'function',
+      function: {
         name: 'get_business_info',
         description: 'Get hotel information like address, phone, room types',
         parameters: {

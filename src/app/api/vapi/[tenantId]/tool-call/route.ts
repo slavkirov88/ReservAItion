@@ -199,6 +199,21 @@ export async function POST(
     })
   }
 
+  if (toolName === 'get_current_date') {
+    const now = new Date()
+    const bgDate = now.toLocaleDateString('bg-BG', {
+      timeZone: 'Europe/Sofia',
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
+    const isoDate = now.toLocaleDateString('sv-SE', { timeZone: 'Europe/Sofia' }) // YYYY-MM-DD
+    return NextResponse.json({
+      result: `Днес е ${bgDate}. ISO формат: ${isoDate}. Текуща година: ${isoDate.slice(0, 4)}.`
+    })
+  }
+
   if (toolName === 'get_business_info') {
     const { data: tenant } = await supabase
       .from('tenants')
