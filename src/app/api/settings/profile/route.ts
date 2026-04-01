@@ -8,7 +8,7 @@ export async function GET() {
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('business_name, slug, phone, address, languages, website_url, website_content')
+    .select('business_name, slug, phone, address, languages, website_url, website_content, bank_iban, bank_name, company_name, company_address, deposit_percent')
     .eq('owner_id', user.id)
     .single()
 
@@ -21,7 +21,7 @@ export async function PUT(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await request.json() as { business_name?: string; phone?: string; address?: string }
+  const body = await request.json() as { business_name?: string; phone?: string; address?: string; bank_iban?: string; bank_name?: string; company_name?: string; company_address?: string; deposit_percent?: number }
 
   const { data: tenant, error } = await supabase
     .from('tenants')
@@ -29,6 +29,11 @@ export async function PUT(request: Request) {
       business_name: body.business_name,
       phone: body.phone,
       address: body.address,
+      bank_iban: body.bank_iban,
+      bank_name: body.bank_name,
+      company_name: body.company_name,
+      company_address: body.company_address,
+      deposit_percent: body.deposit_percent,
       updated_at: new Date().toISOString(),
     })
     .eq('owner_id', user.id)
