@@ -29,6 +29,11 @@ const TITLE = {
   en: '🤖 AI Receptionist — Demo',
 }
 
+const EMPTY_LABEL = {
+  bg: 'Задайте въпрос на AI рецепциониста',
+  en: 'Ask the AI receptionist anything',
+}
+
 export function DemoChat({ lang, apiKey }: Props) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')

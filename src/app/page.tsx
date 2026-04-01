@@ -57,6 +57,7 @@ const content = {
       cta2: 'Научи повече',
       hint: 'Говори директно с AI рецепционист',
       chatLabel: 'Опитай живото демо →',
+      chatFallback: 'Демо ключът не е конфигуриран',
     },
     stats: [
       { value: 800, prefix: '€', suffix: '+', label: 'спестени на месец' },
@@ -92,6 +93,8 @@ const content = {
     pricing: {
       title: 'Прозрачни цени.',
       sub: 'Спри да плащаш €900/месец за рецепционист.',
+      popular: 'НАЙ-ПОПУЛЯРЕН',
+      perMonth: '/мес',
       plans: [
         { name: 'Стартер', price: '€49', setup: '+ €99 настройка', desc: 'AI чат за сайта', features: ['AI чат на сайта', 'Управление на резервации', 'До 3 типа стаи', 'Имейл известия'], missing: ['AI телефон', 'iCal sync'], cta: 'Започни', highlight: false },
         { name: 'Про', price: '€99', setup: '+ €149 настройка', desc: 'Пълен AI рецепционист', features: ['Всичко от Стартер', 'AI телефон 24/7', 'iCal sync (Booking/Airbnb)', 'Сезонни цени', 'Блокирани дати', 'Телефонен номер'], missing: [], cta: 'Избери Про', highlight: true },
@@ -126,6 +129,7 @@ const content = {
       cta2: 'Learn more',
       hint: 'Talk directly to an AI receptionist',
       chatLabel: 'Try the live demo →',
+      chatFallback: 'Demo API key not configured',
     },
     stats: [
       { value: 800, prefix: '€', suffix: '+', label: 'saved per month' },
@@ -161,6 +165,8 @@ const content = {
     pricing: {
       title: 'Transparent pricing.',
       sub: 'Stop paying €900/month for a receptionist.',
+      popular: 'MOST POPULAR',
+      perMonth: '/mo',
       plans: [
         { name: 'Starter', price: '€49', setup: '+ €99 setup', desc: 'AI chat for your website', features: ['AI chat on website', 'Reservation management', 'Up to 3 room types', 'Email notifications'], missing: ['AI phone', 'iCal sync'], cta: 'Get started', highlight: false },
         { name: 'Pro', price: '€99', setup: '+ €149 setup', desc: 'Full AI receptionist', features: ['Everything in Starter', 'AI phone 24/7', 'iCal sync (Booking/Airbnb)', 'Seasonal pricing', 'Blocked dates', 'Phone number included'], missing: [], cta: 'Choose Pro', highlight: true },
@@ -268,7 +274,7 @@ export default function LandingPage() {
                 <DemoChat lang={lang} apiKey={DEMO_API_KEY} />
               ) : (
                 <div className="h-[480px] rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center text-white/20 text-sm">
-                  Demo API key not configured
+                  {t.hero.chatFallback}
                 </div>
               )}
             </div>
@@ -384,13 +390,13 @@ export default function LandingPage() {
               >
                 {plan.highlight && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-violet-600 text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
-                    ⭐ {lang === 'bg' ? 'НАЙ-ПОПУЛЯРЕН' : 'MOST POPULAR'}
+                    ⭐ {t.pricing.popular}
                   </div>
                 )}
                 <div className="mb-4">
                   <div className="text-sm text-white/40 font-semibold mb-1">{plan.name}</div>
                   <div className="text-4xl font-black mb-1">
-                    {plan.price}<span className="text-base font-normal text-white/30">/mo</span>
+                    {plan.price}<span className="text-base font-normal text-white/30">{t.pricing.perMonth}</span>
                   </div>
                   <div className="text-xs text-white/30">{plan.setup}</div>
                 </div>
