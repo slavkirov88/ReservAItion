@@ -1,0 +1,110 @@
+
+<h2>BI Дашборд — Визуален стил</h2>
+<p class="subtitle">Кой стил отговаря най-добре на твоята платформа?</p>
+
+<div class="cards">
+
+  <!-- Option A: Dark Analytics -->
+  <div class="card" data-choice="dark" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0a0a0f;padding:16px;min-height:200px;">
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <div style="flex:1;background:#111;border:1px solid #222;border-radius:8px;padding:12px;">
+          <div style="font-size:9px;color:#666;margin-bottom:4px;">ПРИХОДИ</div>
+          <div style="font-size:20px;font-weight:800;color:#fff;">€12,450</div>
+          <div style="font-size:9px;color:#4ade80;">▲ +18% vs миналия месец</div>
+        </div>
+        <div style="flex:1;background:#111;border:1px solid #222;border-radius:8px;padding:12px;">
+          <div style="font-size:9px;color:#666;margin-bottom:4px;">ЗАЕТОСТ</div>
+          <div style="font-size:20px;font-weight:800;color:#fff;">78%</div>
+          <div style="font-size:9px;color:#f87171;">▼ -3% vs миналия месец</div>
+        </div>
+      </div>
+      <!-- Fake bar chart -->
+      <div style="background:#111;border:1px solid #222;border-radius:8px;padding:12px;">
+        <div style="font-size:9px;color:#666;margin-bottom:8px;">ПРИХОДИ ПО МЕСЕЦИ</div>
+        <div style="display:flex;align-items:flex-end;gap:4px;height:60px;">
+          <div style="flex:1;background:#6366f1;border-radius:3px 3px 0 0;height:40%;opacity:0.7;"></div>
+          <div style="flex:1;background:#6366f1;border-radius:3px 3px 0 0;height:55%;opacity:0.8;"></div>
+          <div style="flex:1;background:#6366f1;border-radius:3px 3px 0 0;height:35%;opacity:0.7;"></div>
+          <div style="flex:1;background:#6366f1;border-radius:3px 3px 0 0;height:70%;opacity:0.9;"></div>
+          <div style="flex:1;background:#6366f1;border-radius:3px 3px 0 0;height:60%;opacity:0.8;"></div>
+          <div style="flex:1;background:#6366f1;border-radius:3px 3px 0 0;height:85%;opacity:0.9;"></div>
+          <div style="flex:1;background:#a78bfa;border-radius:3px 3px 0 0;height:100%;border:1px solid #c4b5fd;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Dark Analytics</h3>
+      <p>Тъмен фон, неон акценти, числата изпъкват. Стилът на Mixpanel, Linear, Vercel. Модерен и технологичен.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Clean Light -->
+  <div class="card" data-choice="light" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8fafc;padding:16px;min-height:200px;">
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <div style="flex:1;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+          <div style="font-size:9px;color:#94a3b8;margin-bottom:4px;">ПРИХОДИ</div>
+          <div style="font-size:20px;font-weight:800;color:#0f172a;">€12,450</div>
+          <div style="font-size:9px;color:#16a34a;">▲ +18% vs миналия месец</div>
+        </div>
+        <div style="flex:1;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+          <div style="font-size:9px;color:#94a3b8;margin-bottom:4px;">ЗАЕТОСТ</div>
+          <div style="font-size:20px;font-weight:800;color:#0f172a;">78%</div>
+          <div style="font-size:9px;color:#dc2626;">▼ -3% vs миналия месец</div>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <div style="font-size:9px;color:#94a3b8;margin-bottom:8px;">ПРИХОДИ ПО МЕСЕЦИ</div>
+        <div style="display:flex;align-items:flex-end;gap:4px;height:60px;">
+          <div style="flex:1;background:#bfdbfe;border-radius:3px 3px 0 0;height:40%;"></div>
+          <div style="flex:1;background:#bfdbfe;border-radius:3px 3px 0 0;height:55%;"></div>
+          <div style="flex:1;background:#bfdbfe;border-radius:3px 3px 0 0;height:35%;"></div>
+          <div style="flex:1;background:#bfdbfe;border-radius:3px 3px 0 0;height:70%;"></div>
+          <div style="flex:1;background:#bfdbfe;border-radius:3px 3px 0 0;height:60%;"></div>
+          <div style="flex:1;background:#bfdbfe;border-radius:3px 3px 0 0;height:85%;"></div>
+          <div style="flex:1;background:#2563eb;border-radius:3px 3px 0 0;height:100%;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Clean Light</h3>
+      <p>Светъл, чист, корпоративен. Стилът на Google Analytics, Stripe Dashboard. Лесно четим, познат на всеки.</p>
+    </div>
+  </div>
+
+  <!-- Option C: Gradient Modern -->
+  <div class="card" data-choice="gradient" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f0f1a;padding:16px;min-height:200px;">
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <div style="flex:1;background:linear-gradient(135deg,#1e1b4b,#312e81);border:1px solid #4338ca;border-radius:8px;padding:12px;">
+          <div style="font-size:9px;color:#a5b4fc;margin-bottom:4px;">ПРИХОДИ</div>
+          <div style="font-size:20px;font-weight:800;color:#fff;">€12,450</div>
+          <div style="font-size:9px;color:#6ee7b7;">▲ +18% vs миналия месец</div>
+        </div>
+        <div style="flex:1;background:linear-gradient(135deg,#164e63,#0e7490);border:1px solid #0891b2;border-radius:8px;padding:12px;">
+          <div style="font-size:9px;color:#a5f3fc;margin-bottom:4px;">ЗАЕТОСТ</div>
+          <div style="font-size:20px;font-weight:800;color:#fff;">78%</div>
+          <div style="font-size:9px;color:#fda4af;">▼ -3% vs миналия месец</div>
+        </div>
+      </div>
+      <div style="background:#111827;border:1px solid #374151;border-radius:8px;padding:12px;">
+        <div style="font-size:9px;color:#6b7280;margin-bottom:8px;">ПРИХОДИ ПО МЕСЕЦИ</div>
+        <div style="display:flex;align-items:flex-end;gap:4px;height:60px;">
+          <div style="flex:1;background:linear-gradient(to top,#6366f1,#818cf8);border-radius:3px 3px 0 0;height:40%;opacity:0.7;"></div>
+          <div style="flex:1;background:linear-gradient(to top,#6366f1,#818cf8);border-radius:3px 3px 0 0;height:55%;opacity:0.8;"></div>
+          <div style="flex:1;background:linear-gradient(to top,#6366f1,#818cf8);border-radius:3px 3px 0 0;height:35%;opacity:0.7;"></div>
+          <div style="flex:1;background:linear-gradient(to top,#6366f1,#818cf8);border-radius:3px 3px 0 0;height:70%;opacity:0.85;"></div>
+          <div style="flex:1;background:linear-gradient(to top,#6366f1,#818cf8);border-radius:3px 3px 0 0;height:60%;opacity:0.8;"></div>
+          <div style="flex:1;background:linear-gradient(to top,#6366f1,#818cf8);border-radius:3px 3px 0 0;height:85%;opacity:0.9;"></div>
+          <div style="flex:1;background:linear-gradient(to top,#a78bfa,#c4b5fd);border-radius:3px 3px 0 0;height:100%;box-shadow:0 0 8px #a78bfa;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Gradient Modern</h3>
+      <p>Тъмен с цветни gradient карти. Стилът на Notion, Raycast, Resend. Премиум усещане, подходящ за SaaS.</p>
+    </div>
+  </div>
+
+</div>

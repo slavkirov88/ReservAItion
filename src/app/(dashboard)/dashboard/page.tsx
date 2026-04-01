@@ -5,6 +5,8 @@ import { bg } from 'date-fns/locale'
 import { StatsCards } from '@/components/analytics/StatsCards'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { MessageSquare, Phone, CalendarDays, TrendingUp } from 'lucide-react'
+import { differenceInDays } from 'date-fns'
 import type { ReservationRow } from '@/types/database'
 
 export default async function DashboardPage() {
@@ -26,12 +28,16 @@ export default async function DashboardPage() {
 
   const today = format(now, 'yyyy-MM-dd')
 
+  const thisMonthStart = format(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd')
+
   const [
     { data: checkinsData },
     { data: checkoutsData },
     { data: conversationsData },
     { data: roomsData },
     { data: recentData },
+    { data: weeklyReservationsData },
+    { data: monthlyRevenueData },
   ] = await Promise.all([
     supabase
       .from('reservations')
@@ -63,6 +69,18 @@ export default async function DashboardPage() {
       .eq('tenant_id', tenant.id)
       .order('check_in_date', { ascending: false })
       .limit(5),
+    supabase
+      .from('reservations')
+      .select('id, channel', { count: 'exact' })
+      .eq('tenant_id', tenant.id)
+      .gte('check_in_date', weekStart)
+      .lte('check_in_date', weekEnd),
+    supabase
+      .from('reservations')
+      .select('check_in_date, check_out_date, room_type_id, room_types(price_per_night)')
+      .eq('tenant_id', tenant.id)
+      .gte('check_in_date', thisMonthStart)
+      .in('status', ['confirmed', 'completed']),
   ])
 
   const rooms = (roomsData || []) as { status: string }[]
@@ -70,11 +88,25 @@ export default async function DashboardPage() {
   const occupiedRooms = rooms.filter(r => r.status === 'occupied').length
   const occupancyPercent = rooms.length > 0 ? Math.round((occupiedRooms / rooms.length) * 100) : 0
 
+  type RevenueRow = { check_in_date: string; check_out_date: string | null; room_types: { price_per_night: number } | null }
+  const monthlyRevenue = ((monthlyRevenueData || []) as RevenueRow[]).reduce((sum, r) => {
+    if (!r.check_out_date || !r.room_types?.price_per_night) return sum
+    const nights = differenceInDays(new Date(r.check_out_date), new Date(r.check_in_date))
+    return sum + (nights > 0 ? nights * r.room_types.price_per_night : 0)
+  }, 0)
+
+  const weeklyReservations = (weeklyReservationsData || []) as { id: string; channel: string }[]
+  const weeklyChats = weeklyReservations.filter(r => r.channel === 'chat').length
+  const weeklyPhone = weeklyReservations.filter(r => r.channel === 'phone').length
+
   const stats = {
     occupancy_percent: occupancyPercent,
     checkins_today: checkinsData?.length ?? 0,
     checkouts_today: checkoutsData?.length ?? 0,
     total_calls_week: convs.filter(c => c.channel === 'phone').length,
+    reservations_week: weeklyReservations.length,
+    chats_week: weeklyChats,
+    phone_reservations_week: weeklyPhone,
   }
 
   const reservations = (recentData || []) as ReservationRow[]
@@ -101,6 +133,49 @@ export default async function DashboardPage() {
       </div>
 
       <StatsCards stats={stats} />
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Резервации тази седмица</CardTitle>
+            <CalendarDays className="h-4 w-4 text-indigo-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.reservations_week}</div>
+            <p className="text-xs text-muted-foreground mt-1">общо потвърдени</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Чат резервации</CardTitle>
+            <MessageSquare className="h-4 w-4 text-green-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.chats_week}</div>
+            <p className="text-xs text-muted-foreground mt-1">от AI чат widget</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Телефонни резервации</CardTitle>
+            <Phone className="h-4 w-4 text-purple-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.phone_reservations_week}</div>
+            <p className="text-xs text-muted-foreground mt-1">от AI гласов асистент</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Приходи този месец</CardTitle>
+            <TrendingUp className="h-4 w-4 text-yellow-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">€{monthlyRevenue.toLocaleString('bg-BG')}</div>
+            <p className="text-xs text-muted-foreground mt-1">от потвърдени резервации</p>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>

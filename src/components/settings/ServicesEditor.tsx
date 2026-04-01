@@ -84,7 +84,7 @@ export function ServicesEditor() {
             <div className="grid grid-cols-[1fr_100px_120px_40px] gap-2 text-xs font-medium text-muted-foreground px-1">
               <span>Тип стая</span>
               <span>Капацитет</span>
-              <span>Цена/нощ (лв)</span>
+              <span>Цена/нощ (€)</span>
             </div>
           )}
           {roomTypes.map((rt, i) => (

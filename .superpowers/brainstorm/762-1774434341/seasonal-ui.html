@@ -1,0 +1,75 @@
+<h2>Сезонни цени — UI дизайн</h2>
+<p class="subtitle">Настройки → Стаи → таб "Сезонни цени"</p>
+
+<div class="mockup">
+  <div class="mockup-header">Настройки / Стаи</div>
+  <div class="mockup-body">
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:0;border-bottom:1px solid var(--border-color);margin-bottom:20px">
+      <div style="padding:8px 18px;border-bottom:2px solid transparent;color:var(--muted-color);font-size:0.9em;cursor:pointer">Типове стаи</div>
+      <div style="padding:8px 18px;border-bottom:2px solid transparent;color:var(--muted-color);font-size:0.9em;cursor:pointer">Стаи</div>
+      <div style="padding:8px 18px;border-bottom:2px solid var(--accent-color);color:var(--accent-color);font-size:0.9em;font-weight:600;cursor:pointer">Сезонни цени</div>
+    </div>
+
+    <!-- Room type selector -->
+    <div style="margin-bottom:16px">
+      <label style="font-size:0.75em;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted-color);display:block;margin-bottom:6px">Тип стая</label>
+      <div style="display:flex;gap:8px">
+        <div style="padding:6px 14px;border-radius:6px;background:var(--accent-color);color:#000;font-size:0.85em;font-weight:600;cursor:pointer">Стандартна</div>
+        <div style="padding:6px 14px;border-radius:6px;border:1px solid var(--border-color);font-size:0.85em;cursor:pointer;color:var(--muted-color)">Делукс</div>
+        <div style="padding:6px 14px;border-radius:6px;border:1px solid var(--border-color);font-size:0.85em;cursor:pointer;color:var(--muted-color)">Апартамент</div>
+      </div>
+    </div>
+
+    <!-- Base price note -->
+    <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:10px 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:0.85em;color:var(--muted-color)">Базова цена (извън сезоните)</span>
+      <span style="font-weight:700;font-size:1em">95 лв / нощ</span>
+    </div>
+
+    <!-- Seasons list -->
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+
+      <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:12px">
+        <div style="width:10px;height:10px;border-radius:50%;background:#ef4444;flex-shrink:0"></div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:0.9em">Нисък сезон</div>
+          <div style="font-size:0.8em;color:var(--muted-color)">01 яну – 31 мар &nbsp;·&nbsp; 01 ноем – 20 дек</div>
+        </div>
+        <div style="font-weight:700;color:var(--accent-color)">80 лв</div>
+        <div style="font-size:0.75em;color:var(--muted-color);cursor:pointer">✏️</div>
+        <div style="font-size:0.75em;color:var(--muted-color);cursor:pointer">🗑</div>
+      </div>
+
+      <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:12px">
+        <div style="width:10px;height:10px;border-radius:50%;background:#f59e0b;flex-shrink:0"></div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:0.9em">Летен сезон</div>
+          <div style="font-size:0.8em;color:var(--muted-color)">01 юли – 31 авг</div>
+        </div>
+        <div style="font-weight:700;color:var(--accent-color)">150 лв</div>
+        <div style="font-size:0.75em;color:var(--muted-color);cursor:pointer">✏️</div>
+        <div style="font-size:0.75em;color:var(--muted-color);cursor:pointer">🗑</div>
+      </div>
+
+      <div style="background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:12px">
+        <div style="width:10px;height:10px;border-radius:50%;background:#8b5cf6;flex-shrink:0"></div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:0.9em">Зимни празници</div>
+          <div style="font-size:0.8em;color:var(--muted-color)">24 дек – 02 яну</div>
+        </div>
+        <div style="font-weight:700;color:var(--accent-color)">130 лв</div>
+        <div style="font-size:0.75em;color:var(--muted-color);cursor:pointer">✏️</div>
+        <div style="font-size:0.75em;color:var(--muted-color);cursor:pointer">🗑</div>
+      </div>
+
+    </div>
+
+    <!-- Add button -->
+    <div style="border:1px dashed var(--border-color);border-radius:8px;padding:12px;text-align:center;cursor:pointer;color:var(--muted-color);font-size:0.85em">
+      + Добави сезон
+    </div>
+
+  </div>
+</div>

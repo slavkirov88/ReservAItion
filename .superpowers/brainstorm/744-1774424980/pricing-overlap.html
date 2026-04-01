@@ -1,0 +1,29 @@
+<h2>Резервация, обхващаща два сезона</h2>
+<p class="subtitle">Гост: 30 юни – 5 юли. Нормален сезон свършва на 30 юни, висок сезон започва от 1 юли.</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>По нощи (пропорционално)</h3>
+      <p>1 нощ × нормална цена + 4 нощи × висока цена = точна сума</p>
+      <p style="color:var(--accent-color);font-size:0.85em;margin-top:6px">Пример: 1×80лв + 4×120лв = 560лв</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Цената на периода при настаняване</h3>
+      <p>Взима се цената за деня на check-in и важи за целия престой</p>
+      <p style="color:var(--accent-color);font-size:0.85em;margin-top:6px">Пример: 5 нощи × 80лв = 400лв</p>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>По-високата цена за целия престой</h3>
+      <p>Ако някоя нощ попада в по-скъп сезон, той важи за всички нощи</p>
+      <p style="color:var(--accent-color);font-size:0.85em;margin-top:6px">Пример: 5 нощи × 120лв = 600лв</p>
+    </div>
+  </div>
+</div>

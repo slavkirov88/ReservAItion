@@ -112,7 +112,7 @@ export function RoomTypesTab({ roomTypes, onRefresh }: Props) {
                   <Input type="number" min="1" value={form.capacity} onChange={e => setForm(f => ({ ...f, capacity: e.target.value }))} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Цена/нощ (лв) *</Label>
+                  <Label>Цена/нощ (€) *</Label>
                   <Input type="number" min="0" step="0.01" value={form.price_per_night} onChange={e => setForm(f => ({ ...f, price_per_night: e.target.value }))} placeholder="120.00" />
                 </div>
               </div>
@@ -145,7 +145,7 @@ export function RoomTypesTab({ roomTypes, onRefresh }: Props) {
                 {rt.description && <p className="text-sm text-muted-foreground mb-3">{rt.description}</p>}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">До {rt.capacity} гости</span>
-                  <span className="font-semibold">{rt.price_per_night} лв/нощ</span>
+                  <span className="font-semibold">{rt.price_per_night} €/нощ</span>
                 </div>
               </CardContent>
             </Card>
@@ -171,7 +171,7 @@ export function RoomTypesTab({ roomTypes, onRefresh }: Props) {
                 <Input type="number" min="1" value={editForm.capacity} onChange={e => setEditForm(f => ({ ...f, capacity: e.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label>Цена/нощ (лв)</Label>
+                <Label>Цена/нощ (€)</Label>
                 <Input type="number" min="0" step="0.01" value={editForm.price_per_night} onChange={e => setEditForm(f => ({ ...f, price_per_night: e.target.value }))} />
               </div>
             </div>

@@ -44,7 +44,7 @@ export function Step2RoomTypes({ roomTypes, onChange }: Props) {
           <div className="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground">
             <div className="col-span-5">Тип стая</div>
             <div className="col-span-3">Капацитет</div>
-            <div className="col-span-3">Цена/нощ (лв)</div>
+            <div className="col-span-3">Цена/нощ (€)</div>
             <div className="col-span-1" />
           </div>
           {roomTypes.map((rt, i) => (

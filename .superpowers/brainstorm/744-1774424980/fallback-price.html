@@ -1,0 +1,21 @@
+<h2>Какво да е цената извън дефинираните сезони?</h2>
+<p class="subtitle">Например: нямаш зададена цена за октомври — какво показва AI-то?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Базовата цена на стаята</h3>
+      <p>Сезонните цени са допълнение — базовата цена от настройките е "нормалната"</p>
+      <p style="color:var(--accent-color);font-size:0.85em;margin-top:6px">Лесно за управление, винаги има fallback</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Блокира резервация — изисква ръчна цена</h3>
+      <p>Ако периодът не е покрит от сезон, стаята не може да се резервира автоматично</p>
+      <p style="color:var(--accent-color);font-size:0.85em;margin-top:6px">По-строго, но може да блокира продажби случайно</p>
+    </div>
+  </div>
+</div>
