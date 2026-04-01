@@ -18,13 +18,15 @@ type Reservation = {
   id: string
   guest_name: string
   guest_phone: string
+  guest_email: string | null
   check_in_date: string
   check_out_date: string | null
-  status: string
+  status: 'confirmed' | 'cancelled' | 'completed' | 'no_show' | 'pending_payment'
   channel: string
   notes: string | null
   room_type_id: string | null
   room_id: string | null
+  deposit_expires_at: string | null
 }
 
 const statusColors: Record<string, string> = {
@@ -32,6 +34,7 @@ const statusColors: Record<string, string> = {
   cancelled: 'bg-red-500/10 text-red-400 border-red-500/30',
   completed: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
   no_show: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
+  pending_payment: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
 }
 
 const statusLabels: Record<string, string> = {
@@ -39,6 +42,14 @@ const statusLabels: Record<string, string> = {
   cancelled: 'Отменена',
   completed: 'Завършена',
   no_show: 'Неявил се',
+  pending_payment: 'Чака капаро',
+}
+
+function hoursRemaining(expiresAt: string): string {
+  const diff = new Date(expiresAt).getTime() - Date.now()
+  if (diff <= 0) return 'изтекло'
+  const hours = Math.floor(diff / (1000 * 60 * 60))
+  return `остават ${hours}ч`
 }
 
 export function ReservationTable() {
@@ -81,6 +92,11 @@ export function ReservationTable() {
     })
     if (!res.ok) return
     await fetchReservations()
+  }
+
+  const confirmDeposit = async (id: string) => {
+    const res = await fetch(`/api/reservations/${id}/confirm-deposit`, { method: 'POST' })
+    if (res.ok) fetchReservations()
   }
 
   const totalPages = Math.ceil(total / pageSize)
@@ -166,9 +182,26 @@ export function ReservationTable() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={statusColors[r.status]}>
-                    {statusLabels[r.status] || r.status}
-                  </Badge>
+                  <div className="flex flex-col gap-1">
+                    <Badge variant="outline" className={statusColors[r.status]}>
+                      {statusLabels[r.status] || r.status}
+                    </Badge>
+                    {r.status === 'pending_payment' && (
+                      <div className="flex flex-col gap-1 mt-1">
+                        {r.deposit_expires_at && (
+                          <span className="text-xs text-amber-400">{hoursRemaining(r.deposit_expires_at)}</span>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs h-7 border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                          onClick={() => confirmDeposit(r.id)}
+                        >
+                          Потвърди плащане
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
