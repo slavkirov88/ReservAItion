@@ -4,6 +4,6 @@
     "src/app/api/stripe/webhook": { "maxDuration": 10 }
   },
   "crons": [
-    { "path": "/api/cron/expire-deposits", "schedule": "0 * * * *" }
+    { "path": "/api/cron/expire-deposits", "schedule": "0 9 * * *" }
   ]
 }
