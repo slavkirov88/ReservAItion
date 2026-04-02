@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Plus, Trash2, Ban } from 'lucide-react'
+import { Plus, Trash2, Ban, Pencil } from 'lucide-react'
 import type { RoomTypeRow, BlockedDateRow } from '@/types/database'
 
 interface BlockedDateWithRoom extends BlockedDateRow {
@@ -25,6 +25,8 @@ export function BlockedDatesTab({ roomTypes }: Props) {
   const [addOpen, setAddOpen] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
+  const [editTarget, setEditTarget] = useState<BlockedDateWithRoom | null>(null)
+  const [editForm, setEditForm] = useState(EMPTY_FORM)
 
   const fetchBlocked = useCallback(async () => {
     setLoading(true)
@@ -57,6 +59,25 @@ export function BlockedDatesTab({ roomTypes }: Props) {
     }
     setAddOpen(false)
     setForm(EMPTY_FORM)
+    fetchBlocked()
+  }
+
+  const openEdit = (b: BlockedDateWithRoom) => {
+    setEditTarget(b)
+    setEditForm({ room_type_id: b.room_type_id || '', start_date: b.start_date, end_date: b.end_date, reason: b.reason || '' })
+  }
+
+  const handleEdit = async () => {
+    if (!editTarget) return
+    setSaving(true)
+    const res = await fetch(`/api/blocked-dates/${editTarget.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room_type_id: editForm.room_type_id || null, start_date: editForm.start_date, end_date: editForm.end_date, reason: editForm.reason || null }),
+    })
+    setSaving(false)
+    if (!res.ok) { setError('Грешка при редактиране'); return }
+    setEditTarget(null)
     fetchBlocked()
   }
 
@@ -103,12 +124,10 @@ export function BlockedDatesTab({ roomTypes }: Props) {
                     {b.reason ? ` · ${b.reason}` : ''}
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => handleDelete(b.id)}
-                >
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(b)}>
+                  <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(b.id)}>
                   <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                 </Button>
               </CardContent>
@@ -116,6 +135,38 @@ export function BlockedDatesTab({ roomTypes }: Props) {
           ))}
         </div>
       )}
+
+      <Dialog open={!!editTarget} onOpenChange={open => { if (!open) setEditTarget(null) }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Редактирай блокиране</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>От дата *</Label>
+                <Input type="date" value={editForm.start_date} onChange={e => setEditForm(f => ({ ...f, start_date: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>До дата *</Label>
+                <Input type="date" value={editForm.end_date} onChange={e => setEditForm(f => ({ ...f, end_date: e.target.value }))} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Тип стая</Label>
+              <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={editForm.room_type_id} onChange={e => setEditForm(f => ({ ...f, room_type_id: e.target.value }))}>
+                <option value="">Всички стаи</option>
+                {roomTypes.map(rt => <option key={rt.id} value={rt.id}>{rt.name}</option>)}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Причина</Label>
+              <Input value={editForm.reason} onChange={e => setEditForm(f => ({ ...f, reason: e.target.value }))} placeholder="Ремонт, лична употреба..." />
+            </div>
+            <Button onClick={handleEdit} disabled={saving || !editForm.start_date || !editForm.end_date} className="w-full">
+              {saving ? 'Запазване...' : 'Запази промените'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent>

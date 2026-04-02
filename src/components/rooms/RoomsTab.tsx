@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Plus } from 'lucide-react'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
 import type { RoomRow, RoomTypeRow } from '@/types/database'
 
 interface Props {
@@ -37,6 +37,9 @@ export function RoomsTab({ rooms, roomTypes, onRefresh }: Props) {
   const [form, setForm] = useState<{ room_number: string; name: string; room_type_id: string | null }>({ room_number: '', name: '', room_type_id: null })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState<RoomRow | null>(null)
+  const [editForm, setEditForm] = useState<{ room_number: string; name: string; room_type_id: string | null }>({ room_number: '', name: '', room_type_id: null })
 
   const handleSave = async () => {
     setSaving(true)
@@ -59,6 +62,33 @@ export function RoomsTab({ rooms, roomTypes, onRefresh }: Props) {
     }
     setOpen(false)
     setForm({ room_number: '', name: '', room_type_id: null })
+    onRefresh()
+  }
+
+  const openEdit = (room: RoomRow) => {
+    setEditTarget(room)
+    setEditForm({ room_number: room.room_number || '', name: room.name || '', room_type_id: room.room_type_id })
+    setEditOpen(true)
+  }
+
+  const handleEdit = async () => {
+    if (!editTarget) return
+    setSaving(true)
+    const res = await fetch(`/api/rooms/${editTarget.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ table: 'rooms', room_number: editForm.room_number || null, name: editForm.name || null, room_type_id: editForm.room_type_id }),
+    })
+    setSaving(false)
+    if (!res.ok) { setError('Грешка при редактиране'); return }
+    setEditOpen(false)
+    onRefresh()
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Изтрий тази стая?')) return
+    const res = await fetch(`/api/rooms/${id}?table=rooms`, { method: 'DELETE' })
+    if (!res.ok) { setError('Грешка при изтриване'); return }
     onRefresh()
   }
 
@@ -155,6 +185,16 @@ export function RoomsTab({ rooms, roomTypes, onRefresh }: Props) {
                         </SelectContent>
                       </Select>
                     </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(room)}>
+                          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(room.id)}>
+                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 )
               })}
@@ -162,6 +202,36 @@ export function RoomsTab({ rooms, roomTypes, onRefresh }: Props) {
           </Table>
         </div>
       )}
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Редактирай стая</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Тип стая *</Label>
+              <Select value={editForm.room_type_id ?? ''} onValueChange={v => setEditForm(f => ({ ...f, room_type_id: v }))}>
+                <SelectTrigger><SelectValue placeholder="Изберете тип" /></SelectTrigger>
+                <SelectContent>
+                  {roomTypes.map(rt => <SelectItem key={rt.id} value={rt.id}>{rt.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Номер</Label>
+                <Input value={editForm.room_number} onChange={e => setEditForm(f => ({ ...f, room_number: e.target.value }))} placeholder="101" />
+              </div>
+              <div className="space-y-2">
+                <Label>Име</Label>
+                <Input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} placeholder="Морска стая" />
+              </div>
+            </div>
+            <Button onClick={handleEdit} disabled={saving || !editForm.room_type_id} className="w-full">
+              {saving ? 'Запазване...' : 'Запази промените'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
