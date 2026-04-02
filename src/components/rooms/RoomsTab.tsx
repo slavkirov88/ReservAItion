@@ -111,8 +111,8 @@ export function RoomsTab({ rooms, roomTypes, onRefresh }: Props) {
       {error && <p className="text-sm text-red-400">{error}</p>}
       <div className="flex justify-end">
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger render={<Button size="sm" />}>
-            <Plus className="h-4 w-4 mr-2" />Добави стая
+          <DialogTrigger asChild>
+            <Button size="sm"><Plus className="h-4 w-4 mr-2" />Добави стая</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Нова стая</DialogTitle></DialogHeader>

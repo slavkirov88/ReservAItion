@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#0d0d1a"/>
+  <rect width="32" height="32" rx="8" fill="url(#grad)"/>
+  <!-- R letter -->
+  <path d="M8 7h8.5c2.5 0 4.5 2 4.5 4.5S18.9 16 16.5 16H12v9H8V7z" fill="white" opacity="0.95"/>
+  <path d="M16.5 16L21 25h-4.5L12 16" fill="white" opacity="0.95"/>
+  <!-- AI dot accent -->
+  <circle cx="25" cy="8" r="3" fill="#7c3aed"/>
+  <circle cx="25" cy="8" r="1.5" fill="#a78bfa"/>
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#0d0d1a"/>
+    </linearGradient>
+  </defs>
+</svg>
