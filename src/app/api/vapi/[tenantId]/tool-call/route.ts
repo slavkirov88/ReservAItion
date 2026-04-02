@@ -32,8 +32,10 @@ export async function POST(
     return NextResponse.json({ result: 'Invalid request body' }, { status: 400 })
   }
 
-  const toolName = payload.message?.toolCalls?.[0]?.function?.name || payload.toolName
-  const rawArgs = payload.message?.toolCalls?.[0]?.function?.arguments
+  const toolCall = payload.message?.toolCalls?.[0]
+  const toolCallId = (toolCall as Record<string, unknown>)?.id as string | undefined
+  const toolName = toolCall?.function?.name || payload.toolName
+  const rawArgs = toolCall?.function?.arguments
   let parameters: Record<string, string> = {}
   if (rawArgs) {
     if (typeof rawArgs === 'string') {
@@ -45,17 +47,25 @@ export async function POST(
     parameters = (payload.parameters as Record<string, string>) || {}
   }
 
+  // Helper: format response in VAPI-expected format
+  const vapiResult = (result: string) => {
+    if (toolCallId) {
+      return NextResponse.json({ results: [{ toolCallId, result }] })
+    }
+    return NextResponse.json({ result })
+  }
+
   const supabase = await createServiceClient()
 
   if (toolName === 'get_available_room_types') {
     const { check_in_date, check_out_date } = parameters
 
     if (!check_in_date || !check_out_date) {
-      return NextResponse.json({ result: 'Моля уточнете датите на настаняване и напускане, за да проверя наличността.' })
+      return vapiResult('Моля уточнете датите на настаняване и напускане, за да проверя наличността.')
     }
 
     const available = await getAvailableRoomTypes(supabase, tenantId, check_in_date, check_out_date)
-    return NextResponse.json({ result: formatAvailabilityBg(available, check_in_date, check_out_date) })
+    return vapiResult(formatAvailabilityBg(available, check_in_date, check_out_date))
   }
 
   if (toolName === 'book_reservation') {
@@ -63,7 +73,7 @@ export async function POST(
     const total_amount = parameters.total_amount ? Number(parameters.total_amount) : undefined
 
     if (!guest_name || !guest_phone || !check_in_date) {
-      return NextResponse.json({ result: 'Липсват задължителни полета: три имена, телефон и дата на настаняване.' })
+      return vapiResult('Липсват задължителни полета: три имена, телефон и дата на настаняване.')
     }
 
     // Look up room_type_id from name
@@ -79,9 +89,7 @@ export async function POST(
       const available = await getAvailableRoomTypes(supabase, tenantId, check_in_date, check_out_date)
       const requestedType = available.find(r => roomTypeData ? r.id === roomTypeData.id : true)
       if (roomTypeData && !requestedType) {
-        return NextResponse.json({
-          result: `За съжаление ${roomTypeData.name} е заета за ${check_in_date} – ${check_out_date}. ${available.length > 0 ? `Свободни са: ${available.map(r => r.name).join(', ')}.` : 'Няма свободни стаи за този период.'}`
-        })
+        return vapiResult(`За съжаление ${roomTypeData.name} е заета за ${check_in_date} – ${check_out_date}. ${available.length > 0 ? `Свободни са: ${available.map(r => r.name).join(', ')}.` : 'Няма свободни стаи за този период.'}`)
       }
     }
 
@@ -107,7 +115,7 @@ export async function POST(
       .single()
 
     if (error || !reservation) {
-      return NextResponse.json({ result: 'Грешка при резервацията. Моля опитайте отново.' })
+      return vapiResult('Грешка при резервацията. Моля опитайте отново.')
     }
 
     let ownerEmail: string | undefined
@@ -200,9 +208,7 @@ export async function POST(
     }
 
     const checkIn = parseISO(check_in_date)
-    return NextResponse.json({
-      result: `Резервацията е потвърдена! ${guest_name}, настанявате се на ${format(checkIn, 'dd.MM.yyyy')}. Ще получите потвърждение.`
-    })
+    return vapiResult(`Резервацията е потвърдена! ${guest_name}, настанявате се на ${format(checkIn, 'dd.MM.yyyy')}. Ще получите потвърждение.`)
   }
 
   if (toolName === 'get_current_date') {
@@ -215,9 +221,7 @@ export async function POST(
       year: 'numeric',
     })
     const isoDate = now.toLocaleDateString('sv-SE', { timeZone: 'Europe/Sofia' }) // YYYY-MM-DD
-    return NextResponse.json({
-      result: `Днес е ${bgDate}. ISO формат: ${isoDate}. Текуща година: ${isoDate.slice(0, 4)}.`
-    })
+    return vapiResult(`Днес е ${bgDate}. ISO формат: ${isoDate}. Текуща година: ${isoDate.slice(0, 4)}.`)
   }
 
   if (toolName === 'get_business_info') {
@@ -239,8 +243,8 @@ export async function POST(
       roomTypes?.length ? `Стаи: ${roomTypes.map(r => r.name).join(', ')}` : '',
     ].filter(Boolean).join('\n')
 
-    return NextResponse.json({ result: info || 'Информацията не е налична.' })
+    return vapiResult(info || 'Информацията не е налична.')
   }
 
-  return NextResponse.json({ result: 'Неизвестна команда.' })
+  return vapiResult('Неизвестна команда.')
 }
