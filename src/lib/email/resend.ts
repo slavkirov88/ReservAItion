@@ -35,7 +35,7 @@ export async function sendReservationConfirmation(
 
   try {
     await resend.emails.send({
-      from: `${data.hotelName} <reservations@reservaition.com>`,
+      from: `${data.hotelName} <reservations@reservaition.io>`,
       to: toEmail,
       subject: reservationConfirmationSubject(data.hotelName),
       html: reservationConfirmationHtml(data),
@@ -54,7 +54,7 @@ export async function sendOwnerNotification(
 
   try {
     await resend.emails.send({
-      from: 'ReservAItion <notifications@reservaition.com>',
+      from: 'ReservAItion <notifications@reservaition.io>',
       to: ownerEmail,
       subject: ownerNotificationSubject(data.guestName, data.checkInDate),
       html: ownerNotificationHtml(data),
@@ -72,7 +72,7 @@ export async function sendProformaToGuest(
   if (!resend) return
   try {
     await resend.emails.send({
-      from: `${data.hotelName} <reservations@reservaition.com>`,
+      from: `${data.hotelName} <reservations@reservaition.io>`,
       to: toEmail,
       subject: proformaSubject(data.hotelName),
       html: proformaHtml(data),
@@ -90,7 +90,7 @@ export async function sendDepositOwnerNotification(
   if (!resend) return
   try {
     await resend.emails.send({
-      from: 'ReservAItion <notifications@reservaition.com>',
+      from: 'ReservAItion <notifications@reservaition.io>',
       to: ownerEmail,
       subject: depositOwnerNotificationSubject(data.guestName),
       html: depositOwnerNotificationHtml(data),
