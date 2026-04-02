@@ -171,6 +171,15 @@ export type ConversationRow = {
   created_at: string
 }
 
+export interface ICalFeedRow {
+  id: string
+  tenant_id: string
+  url: string
+  label: string | null
+  last_synced_at: string | null
+  created_at: string
+}
+
 // Insert types
 export type TenantInsert = {
   id?: string
