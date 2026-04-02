@@ -9,7 +9,7 @@ interface ToolCallPayload {
     toolCalls?: Array<{
       function?: {
         name?: string
-        arguments?: string
+        arguments?: string | Record<string, unknown>
       }
     }>
   }
@@ -25,12 +25,25 @@ export async function POST(
 
   const body = await request.text()
 
-  const payload = JSON.parse(body) as ToolCallPayload
+  let payload: ToolCallPayload
+  try {
+    payload = JSON.parse(body) as ToolCallPayload
+  } catch {
+    return NextResponse.json({ result: 'Invalid request body' }, { status: 400 })
+  }
+
   const toolName = payload.message?.toolCalls?.[0]?.function?.name || payload.toolName
   const rawArgs = payload.message?.toolCalls?.[0]?.function?.arguments
-  const parameters = rawArgs
-    ? (JSON.parse(rawArgs) as Record<string, string>)
-    : (payload.parameters as Record<string, string>) || {}
+  let parameters: Record<string, string> = {}
+  if (rawArgs) {
+    if (typeof rawArgs === 'string') {
+      try { parameters = JSON.parse(rawArgs) } catch { parameters = {} }
+    } else {
+      parameters = rawArgs as Record<string, string>
+    }
+  } else {
+    parameters = (payload.parameters as Record<string, string>) || {}
+  }
 
   const supabase = await createServiceClient()
 
