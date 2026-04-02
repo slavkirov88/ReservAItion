@@ -23,14 +23,7 @@ export async function POST(
 ) {
   const { tenantId } = await params
 
-  const vapiSecret = request.headers.get('x-vapi-secret')
   const body = await request.text()
-
-  if (process.env.VAPI_WEBHOOK_SECRET) {
-    if (vapiSecret !== process.env.VAPI_WEBHOOK_SECRET) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-  }
 
   const payload = JSON.parse(body) as ToolCallPayload
   const toolName = payload.message?.toolCalls?.[0]?.function?.name || payload.toolName
