@@ -49,7 +49,7 @@ const content = {
   bg: {
     nav: { login: 'Вход', cta: 'Започни безплатно' },
     hero: {
-      badge: 'AI Рецепционист за хотели',
+      badge: 'AI Рецепционист за хотели и имоти за краткосрочен наем',
       headline: 'Спри да пропускаш резервации',
       accent: 'докато спиш.',
       sub: 'ReservAItion отговаря на телефона, приема резервации и синхронизира с Booking.com — 24/7, на Български, без почивни дни.',
@@ -67,9 +67,25 @@ const content = {
     pain: {
       title: 'Познато ли ти е?',
       items: [
-        { icon: '😴', title: 'Пропуснати резервации нощем', desc: 'Гост се обажда в 23:00, никой не вдига — резервира в съседния хотел.' },
+        { icon: '😴', title: 'Пропуснати резервации нощем', desc: 'Гост се обажда в 23:00 за стая или апартамент, никой не вдига. Резервира при конкуренцията.' },
         { icon: '💸', title: 'Рецепционист = най-скъпият разход', desc: 'Заплата, осигуровки, болнични, отпуски. А все пак не може да е там 24/7.' },
         { icon: '📅', title: 'Двойни резервации', desc: 'Ръчната синхронизация с Booking.com води до грешки и ядосани гости.' },
+      ],
+    },
+    forWhom: {
+      title: 'За кого е?',
+      sub: 'Един продукт. Различен setup за двата вертикала.',
+      items: [
+        {
+          icon: '🏨',
+          title: 'Хотели и хостели',
+          desc: '5-50 стаи. Заместване на ресепшън, 24/7 покритие, sync с Booking.com и Airbnb, сезонни цени, обработка на резервации без човек.',
+        },
+        {
+          icon: '🏠',
+          title: 'Имоти за краткосрочен наем',
+          desc: '1-30+ апартамента под управление. Multi-property dashboard, iCal sync с всеки канал, multilingual за чуждестранни гости, унифицирани check-in flows.',
+        },
       ],
     },
     features: {
@@ -98,7 +114,8 @@ const content = {
       plans: [
         { name: 'Стартер', price: '€49', setup: '+ €99 настройка', desc: 'AI чат за сайта', features: ['AI чат на сайта', 'Управление на резервации', 'До 3 типа стаи', 'Имейл известия'], missing: ['AI телефон', 'iCal sync'], cta: 'Започни', highlight: false },
         { name: 'Про', price: '€99', setup: '+ €149 настройка', desc: 'Пълен AI рецепционист', features: ['Всичко от Стартер', 'AI телефон 24/7', 'iCal sync (Booking/Airbnb)', 'Сезонни цени', 'Блокирани дати', 'Телефонен номер'], missing: [], cta: 'Избери Про', highlight: true },
-        { name: 'Хотел', price: '€179', setup: '+ €249 настройка', desc: 'До 3 имота', features: ['Всичко от Про', 'До 3 имота', 'Custom AI глас', 'Приоритетна поддръжка'], missing: [], cta: 'Свържи се', highlight: false },
+        { name: 'Multi-property', price: '€179', setup: '+ €249 настройка', desc: 'Хотели или имоти за краткосрочен наем (3-29 имота)', features: ['Всичко от Про', 'До 29 имота', 'Multi-property dashboard', 'Custom AI глас', 'Приоритетна поддръжка'], missing: [], cta: 'Свържи се', highlight: false },
+        { name: 'Enterprise', price: 'Custom', setup: '', desc: '30+ имота', features: ['Всичко от Multi-property', 'Custom AI глас', 'Multilingual (EN, RU, GR, DE)', 'Dedicated onboarding', 'SLA', 'Custom integrations'], missing: [], cta: 'Свържи се', highlight: false, href: 'mailto:support@reservaition.com' },
       ],
     },
     faq: {
@@ -116,12 +133,12 @@ const content = {
       cta1: '📞 Обади се сега',
       cta2: 'Или започни безплатно →',
     },
-    footer: { tagline: 'AI рецепционист за хотели.' },
+    footer: { tagline: 'AI рецепционист за хотели и имоти за краткосрочен наем.' },
   },
   en: {
     nav: { login: 'Login', cta: 'Start for free' },
     hero: {
-      badge: 'AI Receptionist for Hotels',
+      badge: 'AI Receptionist for Hotels & Vacation Rentals',
       headline: 'Stop missing reservations',
       accent: 'while you sleep.',
       sub: 'ReservAItion answers calls, takes reservations and syncs with Booking.com — 24/7, in Bulgarian, no days off.',
@@ -139,9 +156,25 @@ const content = {
     pain: {
       title: 'Sound familiar?',
       items: [
-        { icon: '😴', title: 'Missed reservations at night', desc: 'A guest calls at 11pm, nobody answers — they book the hotel next door.' },
+        { icon: '😴', title: 'Missed reservations at night', desc: 'A guest calls at 11pm for a room or apartment, nobody answers. They book the competition.' },
         { icon: '💸', title: 'Receptionist = biggest expense', desc: "Salary, benefits, sick days, holidays. Still can't be there 24/7." },
         { icon: '📅', title: 'Double bookings', desc: 'Manual Booking.com sync causes errors and angry guests.' },
+      ],
+    },
+    forWhom: {
+      title: 'Who is it for?',
+      sub: 'One product. Different setup for two verticals.',
+      items: [
+        {
+          icon: '🏨',
+          title: 'Hotels & hostels',
+          desc: '5-50 rooms. Front-desk replacement, 24/7 coverage, sync with Booking.com and Airbnb, seasonal pricing, reservations handled without a human.',
+        },
+        {
+          icon: '🏠',
+          title: 'Vacation rentals',
+          desc: '1-30+ apartments under management. Multi-property dashboard, iCal sync across channels, multilingual for international guests, unified check-in flows.',
+        },
       ],
     },
     features: {
@@ -170,7 +203,8 @@ const content = {
       plans: [
         { name: 'Starter', price: '€49', setup: '+ €99 setup', desc: 'AI chat for your website', features: ['AI chat on website', 'Reservation management', 'Up to 3 room types', 'Email notifications'], missing: ['AI phone', 'iCal sync'], cta: 'Get started', highlight: false },
         { name: 'Pro', price: '€99', setup: '+ €149 setup', desc: 'Full AI receptionist', features: ['Everything in Starter', 'AI phone 24/7', 'iCal sync (Booking/Airbnb)', 'Seasonal pricing', 'Blocked dates', 'Phone number included'], missing: [], cta: 'Choose Pro', highlight: true },
-        { name: 'Hotel', price: '€179', setup: '+ €249 setup', desc: 'Up to 3 properties', features: ['Everything in Pro', 'Up to 3 properties', 'Custom AI voice', 'Priority support'], missing: [], cta: 'Contact us', highlight: false },
+        { name: 'Multi-property', price: '€179', setup: '+ €249 setup', desc: 'Hotels or vacation rentals (3-29 properties)', features: ['Everything in Pro', 'Up to 29 properties', 'Multi-property dashboard', 'Custom AI voice', 'Priority support'], missing: [], cta: 'Contact us', highlight: false },
+        { name: 'Enterprise', price: 'Custom', setup: '', desc: '30+ properties', features: ['Everything in Multi-property', 'Custom AI voice', 'Multilingual (EN, RU, GR, DE)', 'Dedicated onboarding', 'SLA', 'Custom integrations'], missing: [], cta: 'Contact us', highlight: false, href: 'mailto:support@reservaition.com' },
       ],
     },
     faq: {
@@ -188,7 +222,7 @@ const content = {
       cta1: '📞 Call now',
       cta2: 'Or start for free →',
     },
-    footer: { tagline: 'AI receptionist for hotels.' },
+    footer: { tagline: 'AI receptionist for hotels & vacation rentals.' },
   },
 }
 
@@ -325,6 +359,30 @@ export default function LandingPage() {
         </div>
       </Section>
 
+      {/* FOR WHOM */}
+      <Section className="py-20 px-4 sm:px-6 border-t border-white/5">
+        <div className="max-w-5xl mx-auto">
+          <motion.div variants={fadeUp} className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-3">{t.forWhom.title}</h2>
+            <p className="text-white/40 text-lg max-w-xl mx-auto">{t.forWhom.sub}</p>
+          </motion.div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {t.forWhom.items.map((item, i) => (
+              <motion.div
+                key={i}
+                custom={i}
+                variants={fadeUp}
+                className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-8 hover:border-violet-500/30 transition-colors"
+              >
+                <div className="text-4xl mb-4">{item.icon}</div>
+                <h3 className="font-bold text-xl mb-3">{item.title}</h3>
+                <p className="text-white/50 text-sm leading-relaxed">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </Section>
+
       {/* FEATURES */}
       <Section className="py-20 px-4 sm:px-6 border-t border-white/5">
         <div className="max-w-5xl mx-auto">
@@ -376,8 +434,11 @@ export default function LandingPage() {
             <h2 className="text-3xl sm:text-4xl font-bold mb-3">{t.pricing.title}</h2>
             <p className="text-white/40 text-lg">{t.pricing.sub}</p>
           </motion.div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {t.pricing.plans.map((plan, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {t.pricing.plans.map((plan, i) => {
+              const planHref = (plan as { href?: string }).href || '/register'
+              const showPerMonth = plan.price.startsWith('€')
+              return (
               <motion.div
                 key={i}
                 custom={i}
@@ -396,9 +457,9 @@ export default function LandingPage() {
                 <div className="mb-4">
                   <div className="text-sm text-white/40 font-semibold mb-1">{plan.name}</div>
                   <div className="text-4xl font-black mb-1">
-                    {plan.price}<span className="text-base font-normal text-white/30">{t.pricing.perMonth}</span>
+                    {plan.price}{showPerMonth && <span className="text-base font-normal text-white/30">{t.pricing.perMonth}</span>}
                   </div>
-                  <div className="text-xs text-white/30">{plan.setup}</div>
+                  {plan.setup && <div className="text-xs text-white/30">{plan.setup}</div>}
                 </div>
                 <p className="text-sm text-white/40 mb-4">{plan.desc}</p>
                 <ul className="space-y-2 mb-6 flex-1">
@@ -416,7 +477,7 @@ export default function LandingPage() {
                   ))}
                 </ul>
                 <Link
-                  href="/register"
+                  href={planHref}
                   className={`text-center py-3 rounded-xl font-semibold text-sm transition-all ${
                     plan.highlight
                       ? 'bg-violet-600 hover:bg-violet-500 text-white'
@@ -426,7 +487,8 @@ export default function LandingPage() {
                   {plan.cta}
                 </Link>
               </motion.div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </Section>
