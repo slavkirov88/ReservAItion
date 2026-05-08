@@ -147,9 +147,10 @@ export type ReservationRow = {
   room_id: string | null
   check_in_date: string
   check_out_date: string | null
-  status: 'confirmed' | 'cancelled' | 'no_show' | 'completed' | 'pending_payment'
+  status: 'inquiry' | 'confirmed' | 'cancelled' | 'no_show' | 'completed' | 'pending_payment'
   channel: 'phone' | 'chat' | 'manual'
   notes: string | null
+  guests_count: number | null
   external_uid: string | null
   guest_email: string | null
   total_amount: number | null
@@ -268,9 +269,10 @@ export type ReservationInsert = {
   room_id?: string | null
   check_in_date: string
   check_out_date?: string | null
-  status?: 'confirmed' | 'cancelled' | 'no_show' | 'completed' | 'pending_payment'
+  status?: 'inquiry' | 'confirmed' | 'cancelled' | 'no_show' | 'completed' | 'pending_payment'
   channel: 'phone' | 'chat' | 'manual'
   notes?: string | null
+  guests_count?: number | null
   guest_email?: string | null
   total_amount?: number | null
   deposit_amount?: number | null

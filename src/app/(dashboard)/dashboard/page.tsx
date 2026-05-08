@@ -112,17 +112,21 @@ export default async function DashboardPage() {
   const reservations = (recentData || []) as ReservationRow[]
 
   const statusColors: Record<string, string> = {
+    inquiry: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
     confirmed: 'bg-green-500/10 text-green-400 border-green-500/30',
     cancelled: 'bg-red-500/10 text-red-400 border-red-500/30',
     completed: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
     no_show: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
+    pending_payment: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
   }
 
   const statusLabels: Record<string, string> = {
+    inquiry: 'Запитване',
     confirmed: 'Потвърдена',
     cancelled: 'Отменена',
     completed: 'Завършена',
     no_show: 'Неявил се',
+    pending_payment: 'Чака плащане',
   }
 
   return (

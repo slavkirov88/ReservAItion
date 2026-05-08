@@ -4,6 +4,7 @@ export interface OwnerNotificationData {
   checkInDate: string
   checkOutDate?: string | null
   roomType?: string | null
+  guestsCount?: number | null
   channel: 'phone' | 'chat' | 'manual'
   hotelName: string
 }
@@ -15,7 +16,7 @@ const channelLabel: Record<string, string> = {
 }
 
 export function ownerNotificationHtml(data: OwnerNotificationData): string {
-  const { guestName, guestPhone, checkInDate, checkOutDate, roomType, channel, hotelName } = data
+  const { guestName, guestPhone, checkInDate, checkOutDate, roomType, guestsCount, channel, hotelName } = data
   const dateRange = checkOutDate ? `${checkInDate} – ${checkOutDate}` : checkInDate
 
   return `<!DOCTYPE html>
@@ -28,12 +29,12 @@ export function ownerNotificationHtml(data: OwnerNotificationData): string {
         <tr>
           <td style="background:#111827;padding:24px 32px;">
             <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">🏨 ${hotelName}</h1>
-            <p style="margin:4px 0 0;color:rgba(255,255,255,.6);font-size:13px;">Нова резервация от AI асистента</p>
+            <p style="margin:4px 0 0;color:rgba(255,255,255,.6);font-size:13px;">Ново запитване за резервация от AI асистента</p>
           </td>
         </tr>
         <tr>
           <td style="padding:28px 32px;">
-            <p style="margin:0 0 20px;font-size:15px;color:#111;">Постъпи нова резервация:</p>
+            <p style="margin:0 0 20px;font-size:15px;color:#111;">Клиент се интересува от резервация. Свържете се с него:</p>
             <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin-bottom:20px;">
               <tr style="background:#f9fafb;">
                 <td style="padding:11px 16px;font-size:13px;color:#666;width:38%;">Гост</td>
@@ -41,17 +42,21 @@ export function ownerNotificationHtml(data: OwnerNotificationData): string {
               </tr>
               <tr>
                 <td style="padding:11px 16px;font-size:13px;color:#666;border-top:1px solid #e5e7eb;">Телефон</td>
-                <td style="padding:11px 16px;font-size:14px;color:#111;border-top:1px solid #e5e7eb;">${guestPhone}</td>
+                <td style="padding:11px 16px;font-size:14px;color:#111;font-weight:600;border-top:1px solid #e5e7eb;"><a href="tel:${guestPhone}" style="color:#6366f1;">${guestPhone}</a></td>
               </tr>
               <tr style="background:#f9fafb;">
-                <td style="padding:11px 16px;font-size:13px;color:#666;border-top:1px solid #e5e7eb;">Дати</td>
+                <td style="padding:11px 16px;font-size:13px;color:#666;border-top:1px solid #e5e7eb;">Период</td>
                 <td style="padding:11px 16px;font-size:14px;color:#111;font-weight:600;border-top:1px solid #e5e7eb;">${dateRange}</td>
               </tr>
-              ${roomType ? `<tr>
+              ${guestsCount ? `<tr>
+                <td style="padding:11px 16px;font-size:13px;color:#666;border-top:1px solid #e5e7eb;">Брой гости</td>
+                <td style="padding:11px 16px;font-size:14px;color:#111;border-top:1px solid #e5e7eb;">${guestsCount}</td>
+              </tr>` : ''}
+              ${roomType ? `<tr${guestsCount ? '' : ' style="background:#f9fafb;"'}>
                 <td style="padding:11px 16px;font-size:13px;color:#666;border-top:1px solid #e5e7eb;">Стая</td>
                 <td style="padding:11px 16px;font-size:14px;color:#111;border-top:1px solid #e5e7eb;">${roomType}</td>
               </tr>` : ''}
-              <tr>
+              <tr style="background:#f9fafb;">
                 <td style="padding:11px 16px;font-size:13px;color:#666;border-top:1px solid #e5e7eb;">Канал</td>
                 <td style="padding:11px 16px;font-size:14px;color:#6366f1;border-top:1px solid #e5e7eb;">${channelLabel[channel] || channel}</td>
               </tr>
@@ -71,5 +76,5 @@ export function ownerNotificationHtml(data: OwnerNotificationData): string {
 }
 
 export function ownerNotificationSubject(guestName: string, checkInDate: string): string {
-  return `🔔 Нова резервация — ${guestName} (${checkInDate})`
+  return `🔔 Ново запитване — ${guestName} (${checkInDate})`
 }

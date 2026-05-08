@@ -21,7 +21,7 @@ type Reservation = {
   guest_email: string | null
   check_in_date: string
   check_out_date: string | null
-  status: 'confirmed' | 'cancelled' | 'completed' | 'no_show' | 'pending_payment'
+  status: 'inquiry' | 'confirmed' | 'cancelled' | 'completed' | 'no_show' | 'pending_payment'
   channel: string
   notes: string | null
   room_type_id: string | null
@@ -30,6 +30,7 @@ type Reservation = {
 }
 
 const statusColors: Record<string, string> = {
+  inquiry: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
   confirmed: 'bg-green-500/10 text-green-400 border-green-500/30',
   cancelled: 'bg-red-500/10 text-red-400 border-red-500/30',
   completed: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
@@ -38,6 +39,7 @@ const statusColors: Record<string, string> = {
 }
 
 const statusLabels: Record<string, string> = {
+  inquiry: 'Запитване',
   confirmed: 'Потвърдена',
   cancelled: 'Отменена',
   completed: 'Завършена',
@@ -113,10 +115,12 @@ export function ReservationTable() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Всички</SelectItem>
+            <SelectItem value="inquiry">Запитване</SelectItem>
             <SelectItem value="confirmed">Потвърдена</SelectItem>
             <SelectItem value="completed">Завършена</SelectItem>
             <SelectItem value="cancelled">Отменена</SelectItem>
             <SelectItem value="no_show">Неявил се</SelectItem>
+            <SelectItem value="pending_payment">Чака плащане</SelectItem>
           </SelectContent>
         </Select>
         <Input type="date" value={fromDate} onChange={e => { setFromDate(e.target.value); setPage(1) }} className="w-40" placeholder="От дата" />

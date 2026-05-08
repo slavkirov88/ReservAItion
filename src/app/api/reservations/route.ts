@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     .order('check_in_date', { ascending: false })
     .range((page - 1) * pageSize, page * pageSize - 1)
 
-  if (status) query = query.eq('status', status as 'confirmed' | 'cancelled' | 'no_show' | 'completed')
+  if (status) query = query.eq('status', status as 'inquiry' | 'confirmed' | 'cancelled' | 'no_show' | 'completed' | 'pending_payment')
   if (from) query = query.gte('check_in_date', from)
   if (to) query = query.lte('check_in_date', to)
   if (checkoutDate) {
