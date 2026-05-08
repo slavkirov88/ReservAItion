@@ -9,6 +9,17 @@ import { sendReservationConfirmation, sendOwnerNotification, sendProformaToGuest
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder' })
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Max-Age': '86400',
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS_HEADERS })
+}
+
 interface MessageParam {
   role: 'user' | 'assistant'
   content: string
@@ -66,7 +77,7 @@ export async function POST(
     .eq('public_api_key', apiKey)
     .single()
 
-  if (!tenant) return NextResponse.json({ error: 'Invalid API key' }, { status: 401 })
+  if (!tenant) return NextResponse.json({ error: 'Invalid API key' }, { status: 401, headers: CORS_HEADERS })
 
   const { data: profile } = await supabase
     .from('business_profiles')
@@ -345,6 +356,7 @@ async function streamResponse(stream: AsyncIterable<Anthropic.MessageStreamEvent
     }),
     {
       headers: {
+        ...CORS_HEADERS,
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
