@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createVapiAssistant } from '@/lib/vapi/vapi-service'
+import { createVapiAssistant, updateVapiAssistant } from '@/lib/vapi/vapi-service'
 
 export async function GET() {
   const supabase = await createClient()
@@ -29,7 +29,7 @@ export async function POST() {
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, business_name, languages, address, website_content')
+    .select('id, business_name, languages, address, website_content, vapi_assistant_id')
     .eq('owner_id', user.id)
     .single()
 
@@ -46,23 +46,39 @@ export async function POST() {
     .select('name, capacity, price_per_night')
     .eq('tenant_id', tenant.id)
 
-  try {
-    const { assistantId } = await createVapiAssistant(
-      { id: tenant.id, business_name: tenant.business_name, languages: tenant.languages || ['bg'] },
-      {
-        room_types: roomTypes || [],
-        faqs: profile?.faqs || [],
-        booking_rules: profile?.booking_rules || '',
-        welcome_message_bg: profile?.welcome_message_bg || 'Здравейте! Как мога да ви помогна?',
-        address: tenant.address || '',
-        website_content: tenant.website_content || undefined,
-      }
-    )
+  const vapiProfile = {
+    room_types: roomTypes || [],
+    faqs: profile?.faqs || [],
+    booking_rules: profile?.booking_rules || '',
+    welcome_message_bg: profile?.welcome_message_bg || 'Здравейте! Как мога да ви помогна?',
+    address: tenant.address || '',
+    website_content: tenant.website_content || undefined,
+  }
+  const vapiTenant = { id: tenant.id, business_name: tenant.business_name, languages: tenant.languages || ['bg'] }
 
-    await supabase
-      .from('tenants')
-      .update({ vapi_assistant_id: assistantId })
-      .eq('id', tenant.id)
+  try {
+    let assistantId = tenant.vapi_assistant_id
+
+    if (assistantId) {
+      try {
+        await updateVapiAssistant(assistantId, vapiTenant, vapiProfile)
+      } catch {
+        // Assistant not found in VAPI — create a new one
+        const result = await createVapiAssistant(vapiTenant, vapiProfile)
+        assistantId = result.assistantId
+        await supabase
+          .from('tenants')
+          .update({ vapi_assistant_id: assistantId })
+          .eq('id', tenant.id)
+      }
+    } else {
+      const result = await createVapiAssistant(vapiTenant, vapiProfile)
+      assistantId = result.assistantId
+      await supabase
+        .from('tenants')
+        .update({ vapi_assistant_id: assistantId })
+        .eq('id', tenant.id)
+    }
 
     return NextResponse.json({ vapi_assistant_id: assistantId })
   } catch (err) {

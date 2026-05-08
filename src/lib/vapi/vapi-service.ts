@@ -15,6 +15,89 @@ export interface VapiProfile {
   website_content?: string
 }
 
+const VAPI_API = 'https://api.vapi.ai'
+
+function vapiHeaders() {
+  return {
+    'Authorization': `Bearer ${process.env.VAPI_API_KEY}`,
+    'Content-Type': 'application/json',
+  }
+}
+
+// Create tools via /tool endpoint and return their IDs
+async function createOrUpdateVapiTools(tenantId: string, baseUrl: string): Promise<string[]> {
+  const serverUrl = `${baseUrl}/api/vapi/${tenantId}/tool-call`
+
+  const toolDefs = [
+    {
+      type: 'function',
+      function: {
+        name: 'get_available_room_types',
+        description: 'Check which room types are available for specific dates. Always call this when the guest asks about availability or wants to book.',
+        parameters: {
+          type: 'object',
+          properties: {
+            check_in_date: { type: 'string', description: 'Check-in date YYYY-MM-DD' },
+            check_out_date: { type: 'string', description: 'Check-out date YYYY-MM-DD' },
+          },
+          required: ['check_in_date', 'check_out_date'],
+        },
+      },
+      server: { url: serverUrl },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'send_booking_inquiry',
+        description: 'Send a booking inquiry to the hotel reception by email. Call this when the guest wants to make a reservation and you have collected their name, dates and number of guests. The phone number is captured automatically from caller ID.',
+        parameters: {
+          type: 'object',
+          properties: {
+            guest_name: { type: 'string', description: 'Guest full name' },
+            guest_phone: { type: 'string', description: 'Guest phone number' },
+            check_in_date: { type: 'string', description: 'Check-in date YYYY-MM-DD' },
+            check_out_date: { type: 'string', description: 'Check-out date YYYY-MM-DD' },
+            guests_count: { type: 'string', description: 'Number of guests' },
+            room_type: { type: 'string', description: 'Preferred room type name (optional)' },
+          },
+          required: ['guest_name', 'check_in_date'],
+        },
+      },
+      server: { url: serverUrl },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'get_current_date',
+        description: 'Returns the current date and year in Bulgarian time (Europe/Sofia). Call this whenever you need to know today\'s date or the current year.',
+        parameters: {
+          type: 'object',
+          properties: {},
+          required: [],
+        },
+      },
+      server: { url: serverUrl },
+    },
+  ]
+
+  const ids: string[] = []
+  for (const tool of toolDefs) {
+    const res = await fetch(`${VAPI_API}/tool`, {
+      method: 'POST',
+      headers: vapiHeaders(),
+      body: JSON.stringify(tool),
+    })
+    if (!res.ok) {
+      const err = await res.text()
+      throw new Error(`Vapi tool create error: ${err}`)
+    }
+    const created = await res.json() as { id: string }
+    ids.push(created.id)
+  }
+
+  return ids
+}
+
 export async function createVapiAssistant(
   tenant: VapiTenant,
   profile: VapiProfile
@@ -30,13 +113,11 @@ export async function createVapiAssistant(
   }, tenant.languages || ['bg'])
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const toolIds = await createOrUpdateVapiTools(tenant.id, baseUrl)
 
-  const response = await fetch('https://api.vapi.ai/assistant', {
+  const response = await fetch(`${VAPI_API}/assistant`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.VAPI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
+    headers: vapiHeaders(),
     body: JSON.stringify({
       name: `ReservAItion - ${tenant.business_name}`,
       voice: {
@@ -52,7 +133,7 @@ export async function createVapiAssistant(
         provider: 'openai',
         model: 'gpt-4o-mini',
         messages: [{ role: 'system', content: systemPrompt }],
-        tools: buildVapiTools(tenant.id, baseUrl),
+        toolIds,
       },
       firstMessage: profile.welcome_message_bg,
     }),
@@ -83,13 +164,11 @@ export async function updateVapiAssistant(
   }, tenant.languages || ['bg'])
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const toolIds = await createOrUpdateVapiTools(tenant.id, baseUrl)
 
-  const response = await fetch(`https://api.vapi.ai/assistant/${assistantId}`, {
+  const response = await fetch(`${VAPI_API}/assistant/${assistantId}`, {
     method: 'PATCH',
-    headers: {
-      'Authorization': `Bearer ${process.env.VAPI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
+    headers: vapiHeaders(),
     body: JSON.stringify({
       voice: {
         provider: 'azure',
@@ -99,7 +178,7 @@ export async function updateVapiAssistant(
         provider: 'openai',
         model: 'gpt-4o-mini',
         messages: [{ role: 'system', content: systemPrompt }],
-        tools: buildVapiTools(tenant.id, baseUrl),
+        toolIds,
       },
       firstMessage: profile.welcome_message_bg,
     }),
@@ -112,95 +191,8 @@ export async function updateVapiAssistant(
 }
 
 export async function deleteVapiAssistant(assistantId: string): Promise<void> {
-  await fetch(`https://api.vapi.ai/assistant/${assistantId}`, {
+  await fetch(`${VAPI_API}/assistant/${assistantId}`, {
     method: 'DELETE',
-    headers: { 'Authorization': `Bearer ${process.env.VAPI_API_KEY}` },
+    headers: vapiHeaders(),
   })
-}
-
-interface VapiToolParameter {
-  type: string
-  description: string
-}
-
-interface VapiTool {
-  type: string
-  function: {
-    name: string
-    description: string
-    parameters: {
-      type: string
-      properties: Record<string, VapiToolParameter>
-      required: string[]
-    }
-  }
-  server: { url: string }
-}
-
-function buildVapiTools(tenantId: string, baseUrl: string): VapiTool[] {
-  return [
-    {
-      type: 'function',
-      function: {
-        name: 'get_available_room_types',
-        description: 'Check which room types are available for specific dates. Always call this when the guest asks about availability or wants to book.',
-        parameters: {
-          type: 'object',
-          properties: {
-            check_in_date: { type: 'string', description: 'Check-in date YYYY-MM-DD' },
-            check_out_date: { type: 'string', description: 'Check-out date YYYY-MM-DD' },
-          },
-          required: ['check_in_date', 'check_out_date'],
-        },
-      },
-      server: { url: `${baseUrl}/api/vapi/${tenantId}/tool-call` },
-    },
-    {
-      type: 'function',
-      function: {
-        name: 'book_reservation',
-        description: 'Book a hotel reservation',
-        parameters: {
-          type: 'object',
-          properties: {
-            guest_name: { type: 'string', description: 'Guest full name' },
-            guest_phone: { type: 'string', description: 'Guest phone number' },
-            room_type: { type: 'string', description: 'Room type name' },
-            check_in_date: { type: 'string', description: 'Check-in date YYYY-MM-DD' },
-            check_out_date: { type: 'string', description: 'Check-out date YYYY-MM-DD' },
-          },
-          required: ['guest_name', 'guest_phone', 'room_type', 'check_in_date'],
-        },
-      },
-      server: { url: `${baseUrl}/api/vapi/${tenantId}/tool-call` },
-    },
-    {
-      type: 'function',
-      function: {
-        name: 'get_current_date',
-        description: 'Returns the current date and year in Bulgarian time (Europe/Sofia). Call this whenever you need to know today\'s date, the current year, or to calculate dates like "next week" or "this month".',
-        parameters: {
-          type: 'object',
-          properties: {},
-          required: [],
-        },
-      },
-      server: { url: `${baseUrl}/api/vapi/${tenantId}/tool-call` },
-    },
-    {
-      type: 'function',
-      function: {
-        name: 'get_business_info',
-        description: 'Get hotel information like address, phone, room types',
-        parameters: {
-          type: 'object',
-          properties: {
-            query: { type: 'string', description: 'What to look up' },
-          },
-          required: ['query'],
-        },
-      },
-      server: { url: `${baseUrl}/api/vapi/${tenantId}/tool-call` },
-    },
-  ]
 }
