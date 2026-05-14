@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ReservAItion
 
-## Getting Started
+AI-powered receptionist SaaS for Bulgarian hotels and short-term rental properties. Answers the phone, handles reservations, and syncs with Booking.com - 24/7, in Bulgarian, with no days off.
 
-First, run the development server:
+**Live:** [reservaition.io](https://reservaition.io)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## What it does
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Small hotels and short-term rental operators lose bookings when they miss calls outside business hours or when phones go unanswered during cleaning, check-ins, or family time. ReservAItion replaces the missed-call problem with an AI agent that:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Picks up phone calls 24/7 with a natural Bulgarian-speaking voice
+- Answers guest questions about availability, pricing, amenities, and policies
+- Takes reservations end-to-end (collects guest details, confirms dates, accepts deposits)
+- Syncs reservation data with Booking.com via iCal so the calendar never double-books
+- Hands off to a human operator when the conversation exits its scope
+- Also serves the same AI through a chat widget on the property's own website
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Tech Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Frontend:** Next.js (App Router), TypeScript, TailwindCSS
+- **Backend:** Supabase (PostgreSQL + Auth + Storage + RLS)
+- **Voice AI:** Real-time voice agent integration (telephony layer)
+- **Calendar sync:** iCal integration with Booking.com and Airbnb
+- **Testing:** Jest
+- **Deployment:** Vercel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Key features
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- AI phone receptionist (live testable on +359 24 920 219)
+- AI chat widget for property websites
+- Multi-property dashboard for operators managing several listings
+- Booking.com and Airbnb iCal synchronization (two-way calendar safety)
+- Seasonal pricing automation
+- Multilingual support on higher tiers
+- Reservation management without human intervention for standard inquiries
+- Configurable handoff rules for edge cases
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Status
+
+Live and in early commercial use with Bulgarian hospitality operators. Active development.
+
+---
+
+## License
+
+Proprietary. Code shown publicly for portfolio review purposes.
