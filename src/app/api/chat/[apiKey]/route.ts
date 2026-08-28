@@ -213,6 +213,24 @@ export async function POST(
           continue
         }
 
+        if (process.env.N8N_CHAT_WEBHOOK_URL) {
+          fetch(process.env.N8N_CHAT_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              guest_name: bookGuestName,
+              callback_number: bookGuestPhone,
+              guest_email: (args.guest_email as string | undefined) || '',
+              check_in_date: bookCheckin,
+              check_out_date: bookCheckout || '',
+              accommodation_type: (args.room_type_name as string | undefined) || bookRoomType || '',
+              hotel: tenant.business_name,
+              channel: 'chat',
+              reservation_id: reservation.id,
+            }),
+          }).catch((err) => console.error('n8n webhook failed', err))
+        }
+
         const hasDepositFlow =
           guestEmail &&
           totalAmount && totalAmount > 0 &&
