@@ -76,12 +76,18 @@ export async function POST(
 
   // ── Send booking inquiry ────────────────────────────────────────────────────
   if (toolName === 'send_booking_inquiry') {
-    const { guest_name, guest_phone, check_in_date, check_out_date, room_type, guests_count } = parameters
+    const { guest_name, guest_phone, check_in_date, check_out_date, room_type, adults, children, children_ages, guest_email } = parameters
     const effectivePhone = guest_phone || callerPhone || ''
 
     if (!guest_name || !effectivePhone || !check_in_date) {
       return vapiResult('Липсват задължителни данни: три имена, телефон и желана дата.')
     }
+
+    const adultsCount = adults != null && adults !== '' ? Number(adults) : null
+    const childrenCount = children != null && children !== '' ? Number(children) : null
+    const totalGuests = adultsCount != null || childrenCount != null
+      ? (adultsCount ?? 0) + (childrenCount ?? 0)
+      : null
 
     // Look up room_type_id
     const { data: roomTypeData } = room_type
@@ -96,7 +102,11 @@ export async function POST(
       check_in_date,
       check_out_date: check_out_date || null,
       room_type_id: roomTypeData?.id || null,
-      guests_count: guests_count ? Number(guests_count) : null,
+      guests_count: totalGuests,
+      adults: adultsCount,
+      children: childrenCount,
+      children_ages: children_ages || null,
+      guest_email: guest_email || null,
       status: 'inquiry',
       channel: 'phone',
     })
@@ -122,7 +132,10 @@ export async function POST(
           checkInDate: check_in_date,
           checkOutDate: check_out_date || null,
           roomType: room_type || null,
-          guestsCount: guests_count ? Number(guests_count) : null,
+          guestsCount: totalGuests,
+          adults: adultsCount,
+          children: childrenCount,
+          childrenAges: children_ages || null,
           channel: 'phone',
           hotelName: tenantData.business_name || 'Хотел',
         })

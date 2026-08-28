@@ -5,6 +5,9 @@ export interface OwnerNotificationData {
   checkOutDate?: string | null
   roomType?: string | null
   guestsCount?: number | null
+  adults?: number | null
+  children?: number | null
+  childrenAges?: string | null
   channel: 'phone' | 'chat' | 'manual'
   hotelName: string
 }
@@ -16,8 +19,19 @@ const channelLabel: Record<string, string> = {
 }
 
 export function ownerNotificationHtml(data: OwnerNotificationData): string {
-  const { guestName, guestPhone, checkInDate, checkOutDate, roomType, guestsCount, channel, hotelName } = data
+  const { guestName, guestPhone, checkInDate, checkOutDate, roomType, guestsCount, adults, children, childrenAges, channel, hotelName } = data
   const dateRange = checkOutDate ? `${checkInDate} – ${checkOutDate}` : checkInDate
+
+  // Prefer the adults/children breakdown; fall back to the legacy total.
+  let guestsLabel = ''
+  if (adults != null || children != null) {
+    const parts: string[] = []
+    if (adults != null) parts.push(`${adults} възрастни`)
+    if (children) parts.push(`${children} деца${childrenAges ? ` (${childrenAges})` : ''}`)
+    guestsLabel = parts.join(', ')
+  } else if (guestsCount) {
+    guestsLabel = String(guestsCount)
+  }
 
   return `<!DOCTYPE html>
 <html lang="bg">
@@ -48,11 +62,11 @@ export function ownerNotificationHtml(data: OwnerNotificationData): string {
                 <td style="padding:11px 16px;font-size:13px;color:#666;border-top:1px solid #e5e7eb;">Период</td>
                 <td style="padding:11px 16px;font-size:14px;color:#111;font-weight:600;border-top:1px solid #e5e7eb;">${dateRange}</td>
               </tr>
-              ${guestsCount ? `<tr>
-                <td style="padding:11px 16px;font-size:13px;color:#666;border-top:1px solid #e5e7eb;">Брой гости</td>
-                <td style="padding:11px 16px;font-size:14px;color:#111;border-top:1px solid #e5e7eb;">${guestsCount}</td>
+              ${guestsLabel ? `<tr>
+                <td style="padding:11px 16px;font-size:13px;color:#666;border-top:1px solid #e5e7eb;">Гости</td>
+                <td style="padding:11px 16px;font-size:14px;color:#111;border-top:1px solid #e5e7eb;">${guestsLabel}</td>
               </tr>` : ''}
-              ${roomType ? `<tr${guestsCount ? '' : ' style="background:#f9fafb;"'}>
+              ${roomType ? `<tr${guestsLabel ? '' : ' style="background:#f9fafb;"'}>
                 <td style="padding:11px 16px;font-size:13px;color:#666;border-top:1px solid #e5e7eb;">Стая</td>
                 <td style="padding:11px 16px;font-size:14px;color:#111;border-top:1px solid #e5e7eb;">${roomType}</td>
               </tr>` : ''}

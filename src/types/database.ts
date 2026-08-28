@@ -151,6 +151,9 @@ export type ReservationRow = {
   channel: 'phone' | 'chat' | 'manual'
   notes: string | null
   guests_count: number | null
+  adults: number | null
+  children: number | null
+  children_ages: string | null
   external_uid: string | null
   guest_email: string | null
   total_amount: number | null
@@ -273,6 +276,9 @@ export type ReservationInsert = {
   channel: 'phone' | 'chat' | 'manual'
   notes?: string | null
   guests_count?: number | null
+  adults?: number | null
+  children?: number | null
+  children_ages?: string | null
   guest_email?: string | null
   total_amount?: number | null
   deposit_amount?: number | null
