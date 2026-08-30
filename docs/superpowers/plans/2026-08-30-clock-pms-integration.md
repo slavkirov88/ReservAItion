@@ -789,12 +789,25 @@ test('the booking is marked as coming from the AI receptionist', () => {
   expect(body.booking.marketing_source).toBe('Phone')
 })
 
-test('without a known guest and without an email it refuses to build', () => {
-  expect(() => buildBookingBody({ /* mainBookingGuestId: null, email: null */ })).toThrow()
+test('a name and a phone are enough, no email needed', () => {
+  const body = buildBookingBody({ /* firstName, lastName, phone, no email, no guest id */ }) as any
+  expect(body.booking.guest_first_name).toBeTruthy()
+  expect(body.booking.guest_phone_number).toBeTruthy()
+  expect(body.booking.guest_e_mail).toBeUndefined()
+})
+
+test('a rate id is required', () => {
+  expect(() => buildBookingBody({ /* rateId: null */ })).toThrow(/rate/i)
 })
 ```
 
-Последният тест кодира тяхното правило: задължително е `guest_e_mail` **или** `main_booking_guest`. По-добре да гръмне у нас с ясно съобщение, отколкото Clock да върне грешка насред разговор.
+✅ **Проверено на живо на 30.08:** резервация само с име и телефон минава (booking `38065670`), а Clock сам създава профила на госта. Агентът **не** пита за имейл.
+
+🔴 **`rate_id` обаче е задължителен на практика.** Без него:
+
+> `400 ... not available for the selected rate. The User doesn't have the following right: 'Booking: Rate Availability Control Override'.`
+
+Clock проверява наличността при създаване и този потребител няма право да я заобиколи. Значи `rate_id` идва от `products` (стъпка 2 на Task 10), не се избира наум. И значи остарял кеш у нас **не може** да презапише хотела, което е добре.
 
 - [ ] **Стъпка 2: Пусни, падат**
 
