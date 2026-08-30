@@ -49,7 +49,7 @@ async function createOrUpdateVapiTools(tenantId: string, baseUrl: string): Promi
       type: 'function',
       function: {
         name: 'send_booking_inquiry',
-        description: 'Send a booking inquiry to the hotel reception by email. Call this when the guest wants to make a reservation and you have collected their name, dates and number of guests. The phone number is captured automatically from caller ID.',
+        description: 'Send a booking inquiry to the hotel reception by email. Call this when the guest wants to make a reservation and you have collected their name, dates and number of guests. The phone number is captured automatically from caller ID. IMPORTANT: count adults and children SEPARATELY — never merge them into one number.',
         parameters: {
           type: 'object',
           properties: {
@@ -57,8 +57,11 @@ async function createOrUpdateVapiTools(tenantId: string, baseUrl: string): Promi
             guest_phone: { type: 'string', description: 'Guest phone number' },
             check_in_date: { type: 'string', description: 'Check-in date YYYY-MM-DD' },
             check_out_date: { type: 'string', description: 'Check-out date YYYY-MM-DD' },
-            guests_count: { type: 'string', description: 'Number of guests' },
+            adults: { type: 'integer', description: 'Number of adults (do NOT include children here)' },
+            children: { type: 'integer', description: 'Number of children. Use 0 if none.' },
+            children_ages: { type: 'string', description: 'Ages of the children if any, e.g. "5 and 8". Leave empty when there are no children.' },
             room_type: { type: 'string', description: 'Preferred room type name (optional)' },
+            guest_email: { type: 'string', description: 'Guest email for confirmation, if the guest dictates one (optional)' },
           },
           required: ['guest_name', 'check_in_date'],
         },

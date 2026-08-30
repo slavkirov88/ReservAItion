@@ -1,0 +1,625 @@
+{
+  "updatedAt": "2026-06-02T17:50:00.076Z",
+  "createdAt": "2026-06-01T10:28:39.373Z",
+  "id": "wSAjInlswYT3AscX",
+  "name": "Vapi → ReservAItion заявки (clean)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "vapi-reservaition",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c44d0636-3b5c-41eb-b0fa-441f8f8904ec",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -944,
+        -64
+      ],
+      "webhookId": "vapi-reservaition"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "OK",
+        "options": {}
+      },
+      "id": "40186621-1d9a-4a21-91a9-7d913bfb1f11",
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -656,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1vpsPIahwJnlDwpyuM4fPflUf1MW8YVDoF5Hvvc-ZhIQ/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Лист1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vpsPIahwJnlDwpyuM4fPflUf1MW8YVDoF5Hvvc-ZhIQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Дата": "={{ new Date($json.timestamp).toISOString().split('T')[0] }}",
+            "Време": "={{ new Date($json.timestamp).toISOString().split('T')[1].split('.')[0] }} ",
+            "Телефон": "={{ $json.callback_number }}",
+            "Име": "={{ $json.guest_name }}\n",
+            "Дата от": "={{ $json.check_in_date }}\n",
+            "Дата до": "={{ $json.check_out_date }}\n",
+            "Брой гости": "={{ $json.guest_count }}\n",
+            "Тип настаняване": "={{ $json.accommodation_type }}\n",
+            "Transcript": "={{ $json.transcript }}\n",
+            "Статус": "нов",
+            "Recording URL": "={{ $json.recordingUrl }}",
+            "Хотел (за multi-tenant)": "Demo"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Дата",
+              "displayName": "Дата",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Време",
+              "displayName": "Време",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Телефон",
+              "displayName": "Телефон",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Име",
+              "displayName": "Име",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Дата от",
+              "displayName": "Дата от",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Дата до",
+              "displayName": "Дата до",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Брой гости",
+              "displayName": "Брой гости",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Тип настаняване",
+              "displayName": "Тип настаняване",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Хотел (за multi-tenant)",
+              "displayName": "Хотел (за multi-tenant)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Transcript",
+              "displayName": "Transcript",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Recording URL",
+              "displayName": "Recording URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Статус",
+              "displayName": "Статус",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "985be45b-5aca-46e3-8212-f7237826c46f",
+      "name": "Append to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -224,
+        -80
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lO48Jt2QWa01CcEY",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $input.first().json.body.message;\nconst so = msg.artifact?.structuredOutputs || {};\n\nconst data = {};\nfor (const id in so) {\n  data[so[id].name] = so[id].result;\n}\n\nreturn [{\n  json: {\n    guest_name: data.guest_name || '',\n    check_in_date: data.check_in_date || '',\n    check_out_date: data.check_out_date || '',\n    guest_count: data.guest_count || '',\n    accommodation_type: data.accommodation_type || '',\n    callback_number: data.callback_number || msg.customer?.number || '',\n    timestamp: msg.timestamp,\n    transcript: msg.transcript || msg.artifact?.transcript || '',\n    recordingUrl: msg.recordingUrl || msg.artifact?.recordingUrl || '',\n    summary: msg.analysis?.summary || ''\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        -80
+      ],
+      "id": "77903ca1-cf63-42b8-99ed-8c7c3bbab1c1",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-1",
+              "leftValue": "={{ $json.body.message.type }}",
+              "rightValue": "end-of-call-report",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "1f9f58bf-33e2-44f5-8a34-b375b51e8a8a",
+      "name": "Is end-of-call?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -672,
+        -64
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is end-of-call?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is end-of-call?": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "d6ccc2f8-4c6d-4db3-8109-8c6ee3d5d5d1",
+  "activeVersionId": "45e4ff93-714d-4624-a2bb-2408806dafe3",
+  "versionCounter": 99,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-06-01T10:28:39.375Z",
+      "createdAt": "2026-06-01T10:28:39.375Z",
+      "role": "workflow:owner",
+      "workflowId": "wSAjInlswYT3AscX",
+      "projectId": "HpktbRJMwx9NBeTb",
+      "project": {
+        "updatedAt": "2026-01-13T05:29:27.739Z",
+        "createdAt": "2026-01-13T05:29:21.940Z",
+        "id": "HpktbRJMwx9NBeTb",
+        "name": "Slav Kirov <slavkirov.sk@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "79e3382c-2642-48c8-9a46-8439cf004932"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-06-01T12:24:15.000Z",
+    "createdAt": "2026-06-01T12:24:13.511Z",
+    "versionId": "45e4ff93-714d-4624-a2bb-2408806dafe3",
+    "workflowId": "wSAjInlswYT3AscX",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "vapi-reservaition",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "c44d0636-3b5c-41eb-b0fa-441f8f8904ec",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -944,
+          -64
+        ],
+        "webhookId": "vapi-reservaition"
+      },
+      {
+        "parameters": {
+          "respondWith": "text",
+          "responseBody": "OK",
+          "options": {}
+        },
+        "id": "40186621-1d9a-4a21-91a9-7d913bfb1f11",
+        "name": "Respond 200",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          -656,
+          176
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "append",
+          "documentId": {
+            "__rl": true,
+            "value": "https://docs.google.com/spreadsheets/d/1vpsPIahwJnlDwpyuM4fPflUf1MW8YVDoF5Hvvc-ZhIQ/edit?gid=0#gid=0",
+            "mode": "url"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "gid=0",
+            "mode": "list",
+            "cachedResultName": "Лист1",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vpsPIahwJnlDwpyuM4fPflUf1MW8YVDoF5Hvvc-ZhIQ/edit#gid=0"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "Дата": "={{ new Date($json.timestamp).toISOString().split('T')[0] }}",
+              "Време": "={{ new Date($json.timestamp).toISOString().split('T')[1].split('.')[0] }} ",
+              "Телефон": "={{ $json.phone }}\n",
+              "Име": "={{ $json.guest_name }}\n",
+              "Дата от": "={{ $json.check_in_date }}\n",
+              "Дата до": "={{ $json.check_out_date }}\n",
+              "Брой гости": "={{ $json.guest_count }}\n",
+              "Тип настаняване": "={{ $json.accommodation_type }}\n",
+              "Transcript": "={{ $json.transcript }}\n",
+              "Статус": "нов",
+              "Recording URL": "={{ $json.recordingUrl }}"
+            },
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "Дата",
+                "displayName": "Дата",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Време",
+                "displayName": "Време",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Телефон",
+                "displayName": "Телефон",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Име",
+                "displayName": "Име",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Дата от",
+                "displayName": "Дата от",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Дата до",
+                "displayName": "Дата до",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Брой гости",
+                "displayName": "Брой гости",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Тип настаняване",
+                "displayName": "Тип настаняване",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Хотел (за multi-tenant)",
+                "displayName": "Хотел (за multi-tenant)",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Transcript",
+                "displayName": "Transcript",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Recording URL",
+                "displayName": "Recording URL",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Статус",
+                "displayName": "Статус",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {}
+        },
+        "id": "985be45b-5aca-46e3-8212-f7237826c46f",
+        "name": "Append to Sheet",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4,
+        "position": [
+          -224,
+          -80
+        ],
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "lO48Jt2QWa01CcEY",
+            "name": "Google Sheets account 2"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const msg = $input.first().json.body.message;\nconst so = msg.artifact?.structuredOutputs || {};\n\nconst data = {};\nfor (const id in so) {\n  data[so[id].name] = so[id].result;\n}\n\nreturn [{\n  json: {\n    guest_name: data.guest_name || '',\n    check_in_date: data.check_in_date || '',\n    check_out_date: data.check_out_date || '',\n    guest_count: data.guest_count || '',\n    accommodation_type: data.accommodation_type || '',\n    callback_number: data.callback_number || msg.customer?.number || '',\n    timestamp: msg.timestamp,\n    transcript: msg.transcript || msg.artifact?.transcript || '',\n    recordingUrl: msg.recordingUrl || msg.artifact?.recordingUrl || '',\n    summary: msg.analysis?.summary || ''\n  }\n}];\n"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -448,
+          -80
+        ],
+        "id": "77903ca1-cf63-42b8-99ed-8c7c3bbab1c1",
+        "name": "Code in JavaScript"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "cond-1",
+                "leftValue": "={{ $json.body.message.type }}",
+                "rightValue": "end-of-call-report",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "or"
+          },
+          "options": {}
+        },
+        "id": "1f9f58bf-33e2-44f5-8a34-b375b51e8a8a",
+        "name": "Is end-of-call?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          -672,
+          -64
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Is end-of-call?",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Respond 200",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code in JavaScript": {
+        "main": [
+          [
+            {
+              "node": "Append to Sheet",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is end-of-call?": {
+        "main": [
+          [
+            {
+              "node": "Code in JavaScript",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Slav Kirov",
+    "name": "Version 45e4ff93",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-06-01T12:24:15.711Z",
+        "id": 36,
+        "workflowId": "wSAjInlswYT3AscX",
+        "versionId": "45e4ff93-714d-4624-a2bb-2408806dafe3",
+        "event": "activated",
+        "userId": "79e3382c-2642-48c8-9a46-8439cf004932"
+      }
+    ]
+  }
+}
