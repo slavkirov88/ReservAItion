@@ -36,6 +36,8 @@ export type TenantRow = {
   company_name: string | null
   company_address: string | null
   deposit_percent: number
+  /** Per-tenant integration config. `settings.clock` wires this tenant to Clock PMS+. */
+  settings: Record<string, unknown>
   created_at: string
   updated_at: string
 }
@@ -205,6 +207,7 @@ export type TenantInsert = {
   company_name?: string | null
   company_address?: string | null
   deposit_percent?: number
+  settings?: Record<string, unknown>
   created_at?: string
   updated_at?: string
 }
@@ -321,6 +324,48 @@ export type Conversation = ConversationRow
 export type SeasonalPricing = SeasonalPricingRow
 export type BlockedDate = BlockedDateRow
 
+// ── Clock PMS+ integration ──────────────────────────────────────────────────
+
+/**
+ * One cached day of Clock's rates_availability, per room type and rate.
+ *
+ * price_cents and currency are stored exactly as Clock returns them. The
+ * sandbox answers in BGN while our own inventory is priced in EUR, so nothing
+ * is converted on the way in or out.
+ */
+export type ClockAvailabilityCacheRow = {
+  tenant_id: string
+  clock_room_type_id: number
+  room_type_name: string | null
+  clock_rate_id: number
+  date: string
+  free: boolean
+  price_cents: number | null
+  currency: string | null
+  free_rooms: number | null
+  min_stay: number | null
+  closed_for_arrival: boolean
+  stop_from_sale: boolean
+  fetched_at: string
+}
+
+/** Guards against Vapi retrying a tool call and booking the guest twice. */
+export type ClockBookingLogRow = {
+  id: string
+  tenant_id: string
+  vapi_call_id: string
+  clock_booking_id: string | null
+  created_at: string
+}
+
+export type ClockAvailabilityCacheInsert =
+  Omit<ClockAvailabilityCacheRow, 'fetched_at'> & { fetched_at?: string }
+
+export type ClockBookingLogInsert = Omit<ClockBookingLogRow, 'id' | 'created_at'> & {
+  id?: string
+  created_at?: string
+}
+
 // Supabase Database type
 export type Database = {
   public: {
@@ -334,6 +379,8 @@ export type Database = {
       reservations: { Row: ReservationRow; Insert: ReservationInsert; Update: ReservationUpdate; Relationships: [] }
       conversations: { Row: ConversationRow; Insert: ConversationInsert; Update: ConversationUpdate; Relationships: [] }
       seasonal_pricing: { Row: SeasonalPricingRow; Insert: SeasonalPricingInsert; Update: SeasonalPricingUpdate; Relationships: [] }
+      clock_availability_cache: { Row: ClockAvailabilityCacheRow; Insert: ClockAvailabilityCacheInsert; Update: Partial<ClockAvailabilityCacheRow>; Relationships: [] }
+      clock_booking_log: { Row: ClockBookingLogRow; Insert: ClockBookingLogInsert; Update: Partial<ClockBookingLogRow>; Relationships: [] }
       blocked_dates: { Row: BlockedDateRow; Insert: BlockedDateInsert; Update: BlockedDateUpdate; Relationships: [] }
     }
     Views: Record<string, never>

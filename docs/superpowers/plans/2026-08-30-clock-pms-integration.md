@@ -191,8 +191,16 @@ clock_booking_log: { Row: ClockBookingLogRow; Insert: Omit<ClockBookingLogRow, '
 
 - [ ] **Стъпка 4: Провери, че компилира**
 
-Run: `npx tsc --noEmit`
-Expected: без нови грешки.
+⚠️ **Чист `tsc` не е постижим в това хранилище.** Заварените грешки са **57** (мерено 30.08), затова и `next.config.ts` ги игнорира при билд (комит `d820b75`). Проверката е сравнение с базата, не нула:
+
+```bash
+npx tsc --noEmit 2>&1 | grep -c "error TS"          # очаква се 57
+git stash push -- src/types/database.ts
+npx tsc --noEmit 2>&1 | grep -c "error TS"          # базово ниво
+git stash pop
+```
+
+Expected: двете числа съвпадат. Ако новото е по-голямо, грешката е твоя.
 
 - [ ] **Стъпка 5: Комит**
 
