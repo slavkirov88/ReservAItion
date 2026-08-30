@@ -236,6 +236,20 @@ export async function clockPost<T = unknown>(
 
 ⚠️ Повторният опит при POST е **само** при мрежов срив преди отговор. Не и при `429`: не знаем дали резервацията е минала, а двойна резервация в чужд PMS е по-скъпа от една неуспешна.
 
+- [ ] **Стъпка 2б: Раздели двата вида `403`**
+
+🔴 Пренесеният клиент обявява **всеки** `403` за бан от WAF. Това е грешно и го доказах на живо на 30.08: guest потребителят върна
+
+```
+403 {"error":"The User doesn't have pms_api_rates_availability_show right"}
+```
+
+Липсващо право, не бан. Ако това стигне до нас като „чакай два часа", ще гоним несъществуващ проблем половин ден.
+
+Добави `ClockForbiddenError` и разделяй по тялото: съдържа ли `right`, това е право, иначе е бан. Тест и за двата случая.
+
+⚠️ Същата поправка трябва да отиде и обратно в StayDesk, където клиентът е роден. Запиши го като задача там, не го прави в този спринт.
+
 - [ ] **Стъпка 3: Напиши тестовете**
 
 ```ts
@@ -381,7 +395,26 @@ export async function searchGuests(creds: ClockCredentials, freeText: string) { 
 export async function createBooking(creds: ClockCredentials, body: unknown) { /* ... */ }
 ```
 
-⚠️ Параметрите на `products` са с квадратни скоби в името (`product_search[arrival]`). Кодирай ги, не ги „оправяй".
+**Проверено срещу sandbox-а на 30.08. Не гадай, използвай тези низове.**
+
+```
+GET /rates_availability/?from=2026-09-06&to=2026-09-13&rates[]=799198&room_types[]=42414
+    &adults=2&children=1&children_ages[]=5                                   -> 200
+
+GET /products?product_search[arrival]=2026-09-06&product_search[departure]=2026-09-13
+    &rates[]=799198&product_search[adult_count]=2&product_search[children_count]=1
+    &product_search[children_ages][]=5                                       -> 200
+
+GET /guests/search?free_text_search=abc                                      -> 200
+```
+
+⚠️ **`room_types` е ЗАДЪЛЖИТЕЛЕН за `rates_availability`.** Документацията му го изброява като „Selected Rooms **or** Room Types", без да го маркира като задължителен. Без него идва `400` с `contract.filled?` и нищо повече. Струва половин час, ако не го знаеш.
+
+⚠️ **`children_ages` е масив.** `children_ages=5` дава `400` с `children_ages.array?`. Правилното е `children_ages[]=5`, а при `products` е `product_search[children_ages][]=5`.
+
+⚠️ Параметрите на `products` са с квадратни скоби в името. Кодирай ги, не ги „оправяй".
+
+⚠️ `guests/search` иска **минимум 3 символа**. По-късо връща `500`, не `400`. Значи търсенето по телефон е наред, но по кратко име не е, и кодът трябва да го пази.
 
 ⚠️ `adults`, `children` и `children_ages` се подават и на `rates_availability`, и на `products`. Без тях цената при тарифи „на човек" се смята грешно. Това е записано в тяхната документация, не е предположение.
 
@@ -435,7 +468,8 @@ export interface GuestCount { adults: number | null; children: number | null; ch
 export interface RoomOffer {
   id: string                 // наш uuid или Clock room_type_id като низ
   name: string
-  pricePerNight: number      // в евро, не в стотинки
+  pricePerNight: number      // цяла единица, не стотинки
+  currency: string           // 'EUR' за own, 'BGN' в Clock sandbox-а. Никога не се приема наум.
   availableRooms: number
   capacity?: number
   restriction?: string       // защо не става, ако не става
@@ -475,7 +509,7 @@ test('own provider maps todays availability shape to RoomOffer', () => {
     { id: 'uuid-1', name: 'Студио', description: null, capacity: 2,
       price_per_night: 88, total_rooms: 3, available_rooms: 2 },
   ])
-  expect(offers[0]).toEqual({ id: 'uuid-1', name: 'Студио', pricePerNight: 88, availableRooms: 2, capacity: 2 })
+  expect(offers[0]).toEqual({ id: 'uuid-1', name: 'Студио', pricePerNight: 88, currency: 'EUR', availableRooms: 2, capacity: 2 })
 })
 ```
 
@@ -566,7 +600,30 @@ test('min_stay is carried through so the agent can say why', () => {
 })
 ```
 
-Истинската форма на отговора се взима от Task 12 (сондата) и се залепя тук като фикстура. Докато нямаме ключ, фикстурата се пише по описанието в документацията и се сверява веднага щом ключът се появи.
+**Фикстурата вече съществува:** `docs/superpowers/fixtures/rates_availability.json`, свалена от sandbox-а на 30.08. Формата е вложена три нива:
+
+```
+[ { type: "Pms::RoomType", id: 42416, rates: {
+      "799198": { "2026-09-06": {
+          free: true,
+          price: { currency: "BGN", cents: 8000 },
+          room_type_free_rooms: 24,
+          errors: null,
+          rate_restriction: { min_stay: null, close_for_arrival: false, stop_from_sale: false, ... }
+      } } } } ]
+```
+
+🔴 **Валутата е BGN, не EUR.** Цените в нашата собствена база са в евро, а Clock връща стотинки в лева. `toCacheRows` записва `currency` както е дошла и **не превръща нищо**. Форматиращата функция казва валутата, която е получила. Агент, който каже „осемдесет евро" за стая от 80 лева, е по-лош от агент, който мълчи.
+
+Задължителен тест:
+
+```ts
+test('carries the currency through instead of assuming euro', () => {
+  const rows = toCacheRows('tenant-1', fixture)
+  expect(rows[0].currency).toBe('BGN')
+  expect(rows[0].price_cents).toBe(8000)
+})
+```
 
 - [ ] **Стъпка 2: Пусни, увери се, че падат**
 
@@ -665,14 +722,14 @@ test('matches todays wording exactly when nothing is restricted', () => {
     '2026-09-12', '2026-09-14',
   )
   const next = formatOffersBg(
-    [{ id: 'a', name: 'Студио', pricePerNight: 88, availableRooms: 2, capacity: 2 }],
+    [{ id: 'a', name: 'Студио', pricePerNight: 88, currency: 'EUR', availableRooms: 2, capacity: 2 }],
     '2026-09-12', '2026-09-14',
   )
   expect(next).toBe(legacy)
 })
 
 test('says the reason when a restriction blocks the dates', () => {
-  const text = formatOffersBg([{ id: '1', name: 'Двойна', pricePerNight: 120, availableRooms: 0, restriction: 'min_stay:2' }], '2026-09-12', '2026-09-13')
+  const text = formatOffersBg([{ id: '1', name: 'Двойна', pricePerNight: 120, currency: 'BGN', availableRooms: 0, restriction: 'min_stay:2' }], '2026-09-12', '2026-09-13')
   expect(text).toContain('минималният престой')
   expect(text).toContain('2')
 })
