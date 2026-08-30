@@ -34,6 +34,8 @@
 | `src/app/api/cron/clock-availability/route.ts` | Пълни кеша на 15 минути. |
 | `src/app/api/vapi/[tenantId]/tool-call/route.ts` | Модифициран: минава през `getInventory`. |
 | `supabase/migrations/011_clock_integration.sql` | `tenants.settings`, кеш таблица, лог на резервациите. |
+| `src/types/database.ts` | Модифициран: `TenantRow.settings` и двете нови таблици в картата `Database`. |
+| `src/lib/clock/children-ages.ts` | Чиста функция: „5 и 8 години" → `[5, 8]` за техните параметри. |
 | `scripts/clock-voice-probe.mjs` | Ръчна проверка срещу sandbox. |
 
 ---
@@ -136,10 +138,55 @@ where table_name = 'tenants' and column_name = 'settings';
 ```
 Expected: един ред.
 
-- [ ] **Стъпка 3: Комит**
+- [ ] **Стъпка 3: Обнови типовете на ръка**
+
+⚠️ `src/types/database.ts` **не е генериран**. Той е ръчно поддържан и `src/lib/supabase/server.ts` подава `createServerClient<Database>`. Ако новите таблици не влязат в картата `Database`, всяко `.from('clock_availability_cache')` пада на компилация. Същият файл се пипа и в `feature/guest-breakdown`, така че прецедентът е в клона, който току-що вля.
+
+Добави:
+
+```ts
+// в TenantRow и TenantUpdate
+settings: Record<string, unknown>
+
+// нови редови типове
+export type ClockAvailabilityCacheRow = {
+  tenant_id: string
+  clock_room_type_id: number
+  room_type_name: string | null
+  clock_rate_id: number
+  date: string
+  free: boolean
+  price_cents: number | null
+  currency: string | null
+  free_rooms: number | null
+  min_stay: number | null
+  closed_for_arrival: boolean
+  stop_from_sale: boolean
+  fetched_at: string
+}
+
+export type ClockBookingLogRow = {
+  id: string
+  tenant_id: string
+  vapi_call_id: string
+  clock_booking_id: string | null
+  created_at: string
+}
+
+// в Database.public.Tables
+clock_availability_cache: { Row: ClockAvailabilityCacheRow; Insert: ClockAvailabilityCacheRow; Update: Partial<ClockAvailabilityCacheRow>; Relationships: [] }
+clock_booking_log: { Row: ClockBookingLogRow; Insert: Omit<ClockBookingLogRow, 'id' | 'created_at'>; Update: Partial<ClockBookingLogRow>; Relationships: [] }
+```
+
+- [ ] **Стъпка 4: Провери, че компилира**
+
+Run: `npx tsc --noEmit`
+Expected: без нови грешки.
+
+- [ ] **Стъпка 5: Комит**
 
 ```bash
-git add supabase/migrations/011_clock_integration.sql
+git add supabase/migrations/011_clock_integration.sql src/types/database.ts
 git commit -m "feat: schema for Clock tenant config, availability cache and booking log"
 ```
 
@@ -155,7 +202,9 @@ git commit -m "feat: schema for Clock tenant config, availability cache and book
 
 - [ ] **Стъпка 1: Копирай транспортната част**
 
-Взимат се: `ClockCredentials`, `ClockRequestOptions`, `ClockError`, `ClockBannedError`, `RATE_LIMIT_PER_SECOND`, `waitForSlot`, `resetRateLimiter`, `parseDigestChallenge`, `buildDigestHeader`, `clockGet`.
+Взимат се: `ClockCredentials`, `ClockRequestOptions`, `ClockError`, `ClockBannedError`, `RATE_LIMIT_PER_SECOND`, `resetRateLimiter`, `parseDigestChallenge`, `buildDigestHeader`, `clockGet`, плюс модулно-частните `waitForSlot`, `md5`, `sleep` и `recentCalls`.
+
+⚠️ `waitForSlot` е частна за модула. Копира се, но **не** се експортира и не се тества директно.
 
 **Не** се взимат: `ClockRoom`, `ClockBooking`, `listRooms`, `listBookingIds`, `getBooking`, `listCheckedInBookingIds`, `listBookingIdsUpdatedSince`. Това са правата на `staydesk_guest`, не на `staydesk_voice`. Пренасянето им би било код, който няма право да се изпълни.
 
@@ -192,8 +241,12 @@ test('parses a digest challenge with quoted and bare fields', () => {
 
 test('digest header carries the user and the uri', () => {
   const header = buildDigestHeader({
-    method: 'GET', uri: '/pms_api/1/2/rooms/', user: 'u', key: 'k',
     challenge: { realm: 'clock', nonce: 'abc', qop: 'auth' },
+    method: 'GET',
+    uri: '/pms_api/1/2/rooms/',
+    username: 'u',
+    password: 'k',
+    cnonce: 'fixed-for-the-test',
   })
   expect(header).toContain('username="u"')
   expect(header).toContain('uri="/pms_api/1/2/rooms/"')
@@ -201,7 +254,9 @@ test('digest header carries the user and the uri', () => {
 })
 ```
 
-Точните аргументи на `buildDigestHeader` се четат от пренесения файл и тестът се напасва по тях, не обратното.
+⚠️ `cnonce` е задължителен и няма стойност по подразбиране. В теста се подава фиксиран, за да е повторим резултатът.
+
+⚠️ `uri` включва и query частта. Тя влиза в хеша HA2, така че изпусната query дава `401`, който изглежда като грешен ключ. Този коментар е в пренесения файл, не го махай.
 
 - [ ] **Стъпка 4: Пусни тестовете**
 
@@ -319,10 +374,36 @@ export async function createBooking(creds: ClockCredentials, body: unknown) { /*
 
 ⚠️ `adults`, `children` и `children_ages` се подават и на `rates_availability`, и на `products`. Без тях цената при тарифи „на човек" се смята грешно. Това е записано в тяхната документация, не е предположение.
 
-- [ ] **Стъпка 2: Комит**
+- [ ] **Стъпка 2: Преобразуване на възрастите**
+
+Нашата колона `children_ages` е **текст** (`010_guest_breakdown.sql`), защото агентът я чува като „5 и 8 години". Техните параметри искат **числа**. Шевът трябва да съществува, иначе цената пак се смята грешно, само че тихо.
+
+Тест първо, `src/lib/clock/children-ages.test.ts`:
+
+```ts
+import { parseChildrenAges } from './children-ages'
+
+test('pulls numbers out of what the agent heard', () => {
+  expect(parseChildrenAges('5 и 8 години')).toEqual([5, 8])
+  expect(parseChildrenAges('на 3')).toEqual([3])
+})
+
+test('empty input gives an empty list, not a zero', () => {
+  expect(parseChildrenAges(null)).toEqual([])
+  expect(parseChildrenAges('')).toEqual([])
+})
+
+test('ignores numbers that cannot be a child age', () => {
+  expect(parseChildrenAges('2026 година, детето е на 4')).toEqual([4])
+})
+```
+
+Последният тест е важен: агентът понякога вплита година в изречението, а възраст над 17 не е дете.
+
+- [ ] **Стъпка 3: Комит**
 
 ```bash
-git add src/lib/clock/voice.ts
+git add src/lib/clock/voice.ts src/lib/clock/children-ages.*
 git commit -m "feat: the four Clock calls the voice API user is allowed to make"
 ```
 
@@ -392,20 +473,49 @@ test('own provider maps todays availability shape to RoomOffer', () => {
 Run: `npm test -- src/lib/inventory/own.test.ts`
 Expected: FAIL, `toOffers` не съществува.
 
-- [ ] **Стъпка 4: Напиши `own.ts`**
+- [ ] **Стъпка 4: Напиши `own.ts`, експортирай `makeOwnProvider`**
 
-Обвива `getAvailableRoomTypes` от `src/lib/availability.ts` и записа в `reservations`, който днес живее в маршрута. Нищо не се преизчислява наново.
+`availability()` обвива `getAvailableRoomTypes` от `src/lib/availability.ts`.
 
-- [ ] **Стъпка 5: Пусни тестовете**
+`createBooking()` пренася **целия** клон `send_booking_inquiry` от `route.ts:79-135`, а не само вмъкването в базата. Той прави три неща:
+
+1. търси типа стая по име с `ilike` (`route.ts:88-91`)
+2. вмъква реда в `reservations`
+3. вика `sendOwnerNotification` към собственика на обекта (`route.ts:120-134`)
+
+⚠️ Ако се премести само вмъкването, съществуващите наематели **тихо спират да получават имейл** при ново запитване. Това е точно видът регресия, която се забелязва седмица по-късно от клиент, не от тест.
+
+- [ ] **Стъпка 5: Тест за пътя на резервацията**
+
+```ts
+test('own createBooking notifies the owner and inserts the row', async () => {
+  const supabase = fakeSupabase()          // хваща from().insert()
+  const notify = jest.fn()
+  const provider = makeOwnProvider(supabase, 'tenant-1', { notify })
+
+  const result = await provider.createBooking({ /* ... */ })
+
+  expect(supabase.inserted('reservations')).toHaveLength(1)
+  expect(notify).toHaveBeenCalledTimes(1)
+  expect(result.ok).toBe(true)
+})
+```
+
+`sendOwnerNotification` се подава като зависимост, за да е тестваем без Resend. Ако това усложни кода повече от полза, вместо това го мокни с `jest.mock('@/lib/email/resend')`.
+
+- [ ] **Стъпка 6: Пусни тестовете**
 
 Run: `npm test -- src/lib/inventory`
 Expected: PASS
 
-- [ ] **Стъпка 6: Комит**
+- [ ] **Стъпка 7: Комит**
 
 ```bash
 git add src/lib/inventory/
-git commit -m "feat: inventory provider interface and the own-inventory implementation"
+git commit -m "feat: inventory provider interface and the own-inventory implementation
+
+createBooking carries the whole existing branch across, owner notification
+included. Moving only the insert would have stopped the emails silently."
 ```
 
 ---
@@ -469,25 +579,47 @@ git commit -m "feat: map a rates_availability response into cache rows"
 
 **Files:**
 - Create: `src/app/api/cron/clock-availability/route.ts`
-- Modify: `vercel.json`
+- ⛔ **`vercel.json` НЕ се пипа.** Виж стъпка 2.
 
 - [ ] **Стъпка 1: Напиши маршрута**
 
 За всеки наемател с блок `clock`: `getRatesAvailability` от днес до днес + 90 дни, `toCacheRows`, upsert.
 
-Пази `x-cron-secret`, както прави съществуващият cron в проекта. Провери как точно е направено там и следвай същия начин, не измисляй втори.
+Автентикацията е точно както при другите два крона в проекта, не измисляй трета:
 
-- [ ] **Стъпка 2: Регистрирай го**
+```ts
+const authHeader = request.headers.get('authorization')
+if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+}
+```
 
-⚠️ Vercel Hobby планът дава **един cron на ден**, не на 15 минути. Това е записано в историята на този проект (комит `f24b809 fix: cron schedule once daily for Hobby plan`).
+- [ ] **Стъпка 2: НЕ регистрирай cron във `vercel.json`**
 
-За демото това е достатъчно: кешът се пълни ръчно с извикване на маршрута преди да покажеш. За пилотен хотел се решава отделно, извън този спринт.
+⛔ `vercel.json` вече съдържа **два** крона (`expire-deposits` и `sync-ical`), а Hobby планът дава точно толкова. Трети запис проваля деплоя. Отделно Hobby разрешава само дневно разписание, така че 15-минутният ритъм от спека е недостижим на този план при всички случаи (виж комит `f24b809`).
 
-- [ ] **Стъпка 3: Комит**
+За Спринт 1 кешът се пълни **ръчно** преди демото:
 
 ```bash
-git add src/app/api/cron/clock-availability/route.ts vercel.json
-git commit -m "feat: cron endpoint that refills the Clock availability cache"
+curl -H "Authorization: Bearer $CRON_SECRET" https://reservaition.io/api/cron/clock-availability
+```
+
+Ако някога трябва да е автоматично, изборът е между платен план и външен планировчик (n8n вече върти при нас на 10 минути за друго). Това е решение за пилотния хотел, не за този спринт.
+
+- [ ] **Стъпка 3: Провери го локално**
+
+Run: `npm run dev`, после curl-ни маршрута с правилния хедър.
+Expected: `200` и брой записани редове в отговора.
+
+- [ ] **Стъпка 4: Комит**
+
+```bash
+git add src/app/api/cron/clock-availability/route.ts
+git commit -m "feat: endpoint that refills the Clock availability cache
+
+Not registered in vercel.json: the Hobby plan allows two crons and both
+slots are taken, and it only schedules daily anyway. Called by hand before
+the demo; the pilot hotel gets a real scheduler."
 ```
 
 ---
@@ -499,9 +631,29 @@ git commit -m "feat: cron endpoint that refills the Clock availability cache"
 - Create: `src/lib/inventory/format-bg.ts`
 - Create: `src/lib/inventory/format-bg.test.ts`
 
+**Решение, което не бива да се остави на импровизация:** и двата доставчика минават през **една** форматираща функция, `formatOffersBg`, върху `RoomOffer[]`. Старата `formatAvailabilityBg` в `src/lib/availability.ts` остава на място, но маршрутът вече не я вика.
+
+⚠️ Това означава, че текстът, който чува гостът на живото демо, минава през нов код. Затова първият тест е златен: `formatOffersBg` трябва да върне **дословно** същия низ, който днешната функция връща за същите данни, когато няма рестрикции.
+
 - [ ] **Стъпка 1: Тестове за българския текст**
 
 ```ts
+import { formatAvailabilityBg } from '@/lib/availability'
+import { formatOffersBg } from './format-bg'
+
+test('matches todays wording exactly when nothing is restricted', () => {
+  const legacy = formatAvailabilityBg(
+    [{ id: 'a', name: 'Студио', description: null, capacity: 2,
+       price_per_night: 88, total_rooms: 3, available_rooms: 2 }],
+    '2026-09-12', '2026-09-14',
+  )
+  const next = formatOffersBg(
+    [{ id: 'a', name: 'Студио', pricePerNight: 88, availableRooms: 2, capacity: 2 }],
+    '2026-09-12', '2026-09-14',
+  )
+  expect(next).toBe(legacy)
+})
+
 test('says the reason when a restriction blocks the dates', () => {
   const text = formatOffersBg([{ id: '1', name: 'Двойна', pricePerNight: 120, availableRooms: 0, restriction: 'min_stay:2' }], '2026-09-12', '2026-09-13')
   expect(text).toContain('минималният престой')
@@ -518,7 +670,7 @@ test('warns when the cache is stale', () => {
 
 - [ ] **Стъпка 2: Пусни, падат, напиши кода**
 
-`clock.availability()` чете само от `clock_availability_cache`. Нула мрежа към Clock, докато гостът чака.
+`clock.ts` експортира `makeClockProvider(supabase, config)`. Неговият `availability()` чете само от `clock_availability_cache`. Нула мрежа към Clock, докато гостът чака.
 
 - [ ] **Стъпка 3: Комит**
 
@@ -609,7 +761,7 @@ rather than in the middle of a phone call."
 | Ситуация | Какво връща `spokenResult` |
 |---|---|
 | Няма отговор до 6 сек | „Записах заявката, рецепцията ще потвърди." Пише се ред у нас. |
-| `ClockBannedError` | Същото към госта. Известие към нас. Никакъв повторен опит. |
+| `ClockBannedError` | Същото към госта. Никакъв повторен опит. Известие: `console.error` с ясен префикс `[CLOCK BANNED]` плюс `sendOwnerNotification` към собственика на обекта. Не се строи нов канал за Спринт 1. |
 | Липсва и гост, и имейл | Агентът пита за имейл и опитва пак. |
 
 Правилото е едно: агентът **никога** не казва „готово", ако не е получил номер на резервация.
@@ -702,7 +854,15 @@ git commit -m "feat: route Vapi tools through the inventory provider"
 
 - [ ] **Стъпка 3: Страница за обаждане от браузър**
 
-Vapi web SDK, един бутон. Показва се със споделен екран, без втори телефонен номер.
+⚠️ В проекта има само `@vapi-ai/server-sdk`. Браузърният е отделен пакет и няма съществуваща страница, от която да се копира:
+
+```bash
+npm i @vapi-ai/web
+```
+
+Иска **публичния** Vapi ключ (не `VAPI_API_KEY`, който е сървърен). Слага се като `NEXT_PUBLIC_VAPI_PUBLIC_KEY`.
+
+Един бутон, който стартира разговора с новия асистент. Показва се със споделен екран, без втори телефонен номер.
 
 - [ ] **Стъпка 4: Репетиция**
 
