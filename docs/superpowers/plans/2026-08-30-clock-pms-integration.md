@@ -4,7 +4,7 @@
 
 **Goal:** Гласовият агент чете реална наличност от Clock PMS+ през локален кеш и създава истинска резервация в PMS-а, видима в техния интерфейс.
 
-**Architecture:** Нов слой `src/lib/inventory/` с два доставчика зад един интерфейс. `own` обвива днешния код и не променя поведението за съществуващите наематели. `clock` чете от таблица-кеш, пълнена от cron на 15 минути, и пише през REST клиента, пренесен от StayDesk. Маршрутът на Vapi инструментите не знае кой доставчик стои отзад.
+**Architecture:** Нов слой `src/lib/inventory/` с два доставчика зад един интерфейс. `own` обвива днешния код и не променя поведението за съществуващите наематели. `clock` чете от таблица-кеш и пише през REST клиента, пренесен от StayDesk. Кешът се пълни от отделна крайна точка, която за Спринт 1 се вика ръчно (виж Task 7). Маршрутът на Vapi инструментите не знае кой доставчик стои отзад.
 
 **Tech Stack:** Next.js 16 App Router, TypeScript, Supabase (Postgres), Jest + ts-jest (`npm test`), Vapi.
 
@@ -31,11 +31,12 @@
 | `src/lib/inventory/index.ts` | `getInventory` избира доставчика. |
 | `src/lib/inventory/format-bg.ts` | Български текст за агента, включително причината при рестрикция. |
 | `src/lib/inventory/format-bg.test.ts` | Тестове на текста. |
-| `src/app/api/cron/clock-availability/route.ts` | Пълни кеша на 15 минути. |
+| `src/app/api/cron/clock-availability/route.ts` | Пълни кеша. Вика се ръчно за Спринт 1, виж Task 7. |
 | `src/app/api/vapi/[tenantId]/tool-call/route.ts` | Модифициран: минава през `getInventory`. |
 | `supabase/migrations/011_clock_integration.sql` | `tenants.settings`, кеш таблица, лог на резервациите. |
 | `src/types/database.ts` | Модифициран: `TenantRow.settings` и двете нови таблици в картата `Database`. |
 | `src/lib/clock/children-ages.ts` | Чиста функция: „5 и 8 години" → `[5, 8]` за техните параметри. |
+| `src/lib/clock/children-ages.test.ts` | Тестове на преобразуването, включително заблуждаващи числа. |
 | `scripts/clock-voice-probe.mjs` | Ръчна проверка срещу sandbox. |
 
 ---
@@ -144,9 +145,12 @@ Expected: един ред.
 
 Добави:
 
+⚠️ `TenantUpdate` е **производен**: `Partial<Omit<TenantInsert, 'id'>>` (`database.ts:296`). Не се пипа директно. Добави полето в `TenantRow` и в `TenantInsert`, и то се появява само.
+
 ```ts
-// в TenantRow и TenantUpdate
+// в TenantRow (задължително) и в TenantInsert (по избор)
 settings: Record<string, unknown>
+settings?: Record<string, unknown>
 
 // нови редови типове
 export type ClockAvailabilityCacheRow = {
@@ -174,7 +178,14 @@ export type ClockBookingLogRow = {
 }
 
 // в Database.public.Tables
-clock_availability_cache: { Row: ClockAvailabilityCacheRow; Insert: ClockAvailabilityCacheRow; Update: Partial<ClockAvailabilityCacheRow>; Relationships: [] }
+// Insert е с незадължителен fetched_at и незадължителни булеви: базата им дава
+// стойност по подразбиране, а toCacheRows не бива да ги попълва напразно.
+clock_availability_cache: {
+  Row: ClockAvailabilityCacheRow
+  Insert: Omit<ClockAvailabilityCacheRow, 'fetched_at'> & { fetched_at?: string }
+  Update: Partial<ClockAvailabilityCacheRow>
+  Relationships: []
+}
 clock_booking_log: { Row: ClockBookingLogRow; Insert: Omit<ClockBookingLogRow, 'id' | 'created_at'>; Update: Partial<ClockBookingLogRow>; Relationships: [] }
 ```
 
@@ -477,11 +488,15 @@ Expected: FAIL, `toOffers` не съществува.
 
 `availability()` обвива `getAvailableRoomTypes` от `src/lib/availability.ts`.
 
-`createBooking()` пренася **целия** клон `send_booking_inquiry` от `route.ts:79-135`, а не само вмъкването в базата. Той прави три неща:
+Подписът е `makeOwnProvider(supabase, tenantId, deps?)`. **Третият аргумент е по избор**, защото Task 11 го вика с два.
 
-1. търси типа стая по име с `ilike` (`route.ts:88-91`)
+`createBooking()` пренася **целия** клон `send_booking_inquiry`, а не само вмъкването в базата. Той прави три неща:
+
+1. търси типа стая по име с `ilike`
 2. вмъква реда в `reservations`
-3. вика `sendOwnerNotification` към собственика на обекта (`route.ts:120-134`)
+3. вика `sendOwnerNotification` към собственика на обекта
+
+⚠️ Номерата на редовете тук нарочно ги няма: след merge-а в Task 0 клонът се измества с около шест реда. Търси по име на функцията, не по номер.
 
 ⚠️ Ако се премести само вмъкването, съществуващите наематели **тихо спират да получават имейл** при ново запитване. Това е точно видът регресия, която се забелязва седмица по-късно от клиент, не от тест.
 
@@ -631,7 +646,9 @@ the demo; the pilot hotel gets a real scheduler."
 - Create: `src/lib/inventory/format-bg.ts`
 - Create: `src/lib/inventory/format-bg.test.ts`
 
-**Решение, което не бива да се остави на импровизация:** и двата доставчика минават през **една** форматираща функция, `formatOffersBg`, върху `RoomOffer[]`. Старата `formatAvailabilityBg` в `src/lib/availability.ts` остава на място, но маршрутът вече не я вика.
+**Решение, което не бива да се остави на импровизация:** и двата доставчика минават през **една** форматираща функция, `formatOffersBg`, върху `RoomOffer[]`.
+
+⛔ Старата `formatAvailabilityBg` в `src/lib/availability.ts` **не се трие.** Освен маршрута на Vapi, тя се вика и от чат уиджета (`src/app/api/chat/[apiKey]/route.ts:141`), който този спринт не пипа. Само маршрутът на Vapi спира да я вика.
 
 ⚠️ Това означава, че текстът, който чува гостът на живото демо, минава през нов код. Затова първият тест е златен: `formatOffersBg` трябва да върне **дословно** същия низ, който днешната функция връща за същите данни, когато няма рестрикции.
 
