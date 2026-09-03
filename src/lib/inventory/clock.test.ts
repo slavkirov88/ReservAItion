@@ -119,3 +119,144 @@ test('a missing check-out is read as one night', async () => {
   const { offers } = await provider([row()]).availability('2026-09-12', '2026-09-12', guests)
   expect(offers[0].availableRooms).toBe(4)
 })
+
+// ---------------------------------------------------------------------------
+// Writing: the part that puts a real booking in someone else's hotel.
+// ---------------------------------------------------------------------------
+
+import { ClockBannedError } from '@/lib/clock/client'
+import type { BookingRequest } from './types'
+
+const bookingRequest: BookingRequest = {
+  guestName: 'Иван Иванов',
+  guestPhone: '+359888123456',
+  guestEmail: null,
+  checkIn: '2026-09-12',
+  checkOut: '2026-09-14',
+  roomTypeRef: 'DBL',
+  guests: { adults: 2, children: 1, childrenAges: '5 години' },
+  callId: 'call-abc',
+}
+
+const products = [{
+  type: 'Pms::RoomType',
+  id: 42414,
+  rates: {
+    '799198': [{ room_type_free_rooms: 3, available: true, price: { cents: 16000, currency: 'BGN' }, errors: {} }],
+    '799205': [{ room_type_free_rooms: 3, available: true, price: { cents: 12000, currency: 'BGN' }, errors: {} }],
+  },
+}]
+
+/** Cache rows plus a booking log, with the writes recorded. */
+function fakeDb(options: { logRow?: Row | null; cache?: Row[] } = {}) {
+  const inserts: Record<string, unknown[]> = {}
+
+  const table = (name: string) => {
+    const chain: Record<string, unknown> = {}
+    const self = () => chain
+    chain.select = self
+    chain.eq = self
+    chain.gte = self
+    chain.lte = self
+    chain.maybeSingle = async () => ({ data: options.logRow ?? null, error: null })
+    chain.single = async () => ({ data: null, error: null })
+    chain.insert = async (r: unknown) => { (inserts[name] ??= []).push(r); return { error: null } }
+    chain.then = (resolve: (v: unknown) => unknown) =>
+      resolve({ data: name === 'clock_availability_cache' ? (options.cache ?? twoNights) : [], error: null })
+    return chain
+  }
+
+  return { from: (name: string) => table(name), inserted: (t: string) => inserts[t] ?? [] }
+}
+
+const writeDeps = (over: Record<string, unknown> = {}) => ({
+  getProducts: jest.fn(async () => products),
+  searchGuests: jest.fn(async () => []),
+  createClockBooking: jest.fn(async () => ({ id: 38065670 })),
+  fallback: { createBooking: jest.fn(async () => ({ ok: true, ref: 'row-1', source: 'own', spokenResult: 'ok' })) },
+  notifyOwner: jest.fn(),
+  ...over,
+})
+
+test('a repeated tool call returns the first booking instead of making a second', async () => {
+  const deps = writeDeps()
+  const db = fakeDb({ logRow: { clock_booking_id: '38065670' } })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await makeClockProvider(db as any, config, deps as any).createBooking(bookingRequest)
+
+  expect(result.ok).toBe(true)
+  expect(result.ref).toBe('38065670')
+  expect(deps.createClockBooking).not.toHaveBeenCalled()
+})
+
+test('books the cheapest available rate and remembers the call', async () => {
+  const deps = writeDeps()
+  const db = fakeDb()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await makeClockProvider(db as any, config, deps as any).createBooking(bookingRequest)
+
+  expect(result.ok).toBe(true)
+  expect(result.ref).toBe('38065670')
+  expect(result.source).toBe('clock')
+  const body = (deps.createClockBooking.mock.calls[0] as unknown[])[1] as { booking: Record<string, unknown> }
+  expect(body.booking.rate_id).toBe(799205)
+  expect(body.booking.arrival_room_type_id).toBe(42414)
+  expect(db.inserted('clock_booking_log')).toHaveLength(1)
+})
+
+test('an existing guest profile is reused instead of duplicated', async () => {
+  const deps = writeDeps({ searchGuests: jest.fn(async () => [{ id: 165099991 }]) })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await makeClockProvider(fakeDb() as any, config, deps as any).createBooking(bookingRequest)
+
+  const body = (deps.createClockBooking.mock.calls[0] as unknown[])[1] as Record<string, unknown>
+  expect(body.main_booking_guest).toBe(165099991)
+  expect(deps.searchGuests).toHaveBeenCalledWith(expect.anything(), '+359888123456')
+})
+
+test('nothing available means nothing is promised', async () => {
+  const deps = writeDeps({ getProducts: jest.fn(async () => [{ type: 'Pms::RoomType', id: 42414, rates: {} }]) })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await makeClockProvider(fakeDb() as any, config, deps as any).createBooking(bookingRequest)
+
+  expect(result.ok).toBe(false)
+  expect(deps.createClockBooking).not.toHaveBeenCalled()
+  expect(result.spokenResult).not.toContain('Готово')
+})
+
+// A ban lasts two hours. Retrying extends it, and the guest must not wait.
+test('a ban falls back to our own row and warns the owner', async () => {
+  const deps = writeDeps({
+    createClockBooking: jest.fn(async () => { throw new ClockBannedError('banned') }),
+  })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await makeClockProvider(fakeDb() as any, config, deps as any).createBooking(bookingRequest)
+
+  expect(deps.fallback.createBooking).toHaveBeenCalledTimes(1)
+  expect(deps.notifyOwner).toHaveBeenCalledTimes(1)
+  expect(result.ok).toBe(true)
+  expect(result.source).toBe('own')
+  expect(result.spokenResult).toMatch(/рецепцията/i)
+})
+
+test('a timeout is never read out as a confirmed booking', async () => {
+  const deps = writeDeps({
+    createClockBooking: jest.fn(async () => { throw new Error('The operation was aborted due to timeout') }),
+  })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await makeClockProvider(fakeDb() as any, config, deps as any).createBooking(bookingRequest)
+
+  expect(deps.fallback.createBooking).toHaveBeenCalledTimes(1)
+  expect(result.spokenResult).toMatch(/рецепцията/i)
+  expect(result.ref).toBeNull()
+})
+
+test('a booking the PMS did not number is not a booking', async () => {
+  const deps = writeDeps({ createClockBooking: jest.fn(async () => ({})) })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await makeClockProvider(fakeDb() as any, config, deps as any).createBooking(bookingRequest)
+
+  expect(result.ref).toBeNull()
+  expect(result.spokenResult).not.toContain('Готово')
+  expect(deps.fallback.createBooking).toHaveBeenCalledTimes(1)
+})
