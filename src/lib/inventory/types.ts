@@ -54,7 +54,19 @@ export interface BookingResult {
   spokenResult: string
 }
 
+export interface AvailabilityResult {
+  offers: RoomOffer[]
+  /**
+   * Age of the answer in minutes, or null when it is live.
+   *
+   * The Clock provider reads a cache, and how old that cache is changes what
+   * the agent is allowed to promise. The formatter needs it, so it travels
+   * with the offers rather than being looked up a second time.
+   */
+  staleMinutes: number | null
+}
+
 export interface InventoryProvider {
-  availability(checkIn: string, checkOut: string, guests: GuestCount): Promise<RoomOffer[]>
+  availability(checkIn: string, checkOut: string, guests: GuestCount): Promise<AvailabilityResult>
   createBooking(req: BookingRequest): Promise<BookingResult>
 }

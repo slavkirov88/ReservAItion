@@ -10,7 +10,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getAvailableRoomTypes, type AvailableRoomType } from '@/lib/availability'
 import { sendOwnerNotification } from '@/lib/email/resend'
-import type { BookingRequest, BookingResult, GuestCount, InventoryProvider, RoomOffer } from './types'
+import type { AvailabilityResult, BookingRequest, BookingResult, GuestCount, InventoryProvider, RoomOffer } from './types'
 
 /** Our own rooms are priced in euro, in one place, so the string is not spread around. */
 const OWN_CURRENCY = 'EUR'
@@ -39,11 +39,12 @@ export function makeOwnProvider(
   const notify = deps.notify ?? sendOwnerNotification
 
   return {
-    async availability(checkIn: string, checkOut: string, _guests: GuestCount): Promise<RoomOffer[]> {
+    async availability(checkIn: string, checkOut: string, _guests: GuestCount): Promise<AvailabilityResult> {
       // Guest counts are not part of our own availability calculation today.
       // They are accepted here so the interface is one shape for both providers.
       void _guests
-      return toOffers(await getAvailableRoomTypes(supabase, tenantId, checkIn, checkOut))
+      // Our own rooms are computed on the spot, so there is nothing to be stale.
+      return { offers: toOffers(await getAvailableRoomTypes(supabase, tenantId, checkIn, checkOut)), staleMinutes: null }
     },
 
     async createBooking(req: BookingRequest): Promise<BookingResult> {
