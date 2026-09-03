@@ -282,7 +282,10 @@ async function attempt<T>(
   const signal = AbortSignal.timeout(timeoutMs)
   const payload = body === undefined ? undefined : JSON.stringify(body)
   const base: Record<string, string> = { Accept: 'application/json' }
-  if (payload !== undefined) base['Content-Type'] = 'application/json'
+  // The charset is spelled out rather than left to the default. Guest names in
+  // a Bulgarian hotel are Cyrillic, and a receiver that falls back to latin-1
+  // turns them into question marks inside the hotel's own database.
+  if (payload !== undefined) base['Content-Type'] = 'application/json; charset=utf-8'
 
   // First pass: unauthenticated, purely to collect the challenge.
   const challenged = await fetch(url, { method, signal, headers: base, body: payload })

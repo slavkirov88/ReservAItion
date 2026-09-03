@@ -94,7 +94,7 @@ const addOneDay = (date: string) =>
 
 /** "Иван Иванов Петров" -> first name, everything else as the family name. */
 export function splitName(full: string): [string, string | null] {
-  const parts = full.trim().split(/s+/).filter(Boolean)
+  const parts = full.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 0) return ['Гост', null]
   return [parts[0], parts.slice(1).join(' ') || null]
 }
