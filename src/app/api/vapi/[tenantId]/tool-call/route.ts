@@ -1,7 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { sendOwnerNotification } from '@/lib/email/resend'
-import { getAvailableRoomTypes, formatAvailabilityBg } from '@/lib/availability'
+import { getInventory } from '@/lib/inventory'
+import { formatOffersBg } from '@/lib/inventory/format-bg'
 
 interface ToolCallPayload {
   message?: {
@@ -13,14 +13,23 @@ interface ToolCallPayload {
       }
     }>
     call?: {
+      id?: string
       customer?: { number?: string }
     }
   }
   call?: {
+    id?: string
     customer?: { number?: string }
   }
   toolName?: string
   parameters?: Record<string, unknown>
+}
+
+/** Vapi sends numbers as strings, and an empty string is not a zero. */
+function toCount(value: string | undefined): number | null {
+  if (value == null || value === '') return null
+  const n = Number(value)
+  return Number.isFinite(n) ? n : null
 }
 
 export async function POST(
@@ -66,70 +75,44 @@ export async function POST(
 
   // ── Check availability ──────────────────────────────────────────────────────
   if (toolName === 'get_available_room_types') {
-    const { check_in_date, check_out_date } = parameters
+    const { check_in_date, check_out_date, adults, children, children_ages } = parameters
     if (!check_in_date || !check_out_date) {
       return vapiResult('Моля уточнете датите на настаняване и напускане.')
     }
-    const available = await getAvailableRoomTypes(supabase, tenantId, check_in_date, check_out_date)
-    return vapiResult(formatAvailabilityBg(available, check_in_date, check_out_date))
+    const inventory = await getInventory(supabase, tenantId)
+    const { offers, staleMinutes } = await inventory.availability(check_in_date, check_out_date, {
+      adults: toCount(adults),
+      children: toCount(children),
+      childrenAges: children_ages || null,
+    })
+    return vapiResult(formatOffersBg(offers, check_in_date, check_out_date, { staleMinutes }))
   }
 
   // ── Send booking inquiry ────────────────────────────────────────────────────
   if (toolName === 'send_booking_inquiry') {
-    const { guest_name, guest_phone, check_in_date, check_out_date, room_type, guests_count } = parameters
+    const { guest_name, guest_phone, check_in_date, check_out_date, room_type, adults, children, children_ages, guest_email } = parameters
     const effectivePhone = guest_phone || callerPhone || ''
 
     if (!guest_name || !effectivePhone || !check_in_date) {
       return vapiResult('Липсват задължителни данни: три имена, телефон и желана дата.')
     }
 
-    // Look up room_type_id
-    const { data: roomTypeData } = room_type
-      ? await supabase.from('room_types').select('id').eq('tenant_id', tenantId).ilike('name', room_type).single()
-      : { data: null }
-
-    // Save inquiry to DB
-    const { error } = await supabase.from('reservations').insert({
-      tenant_id: tenantId,
-      guest_name,
-      guest_phone: effectivePhone,
-      check_in_date,
-      check_out_date: check_out_date || null,
-      room_type_id: roomTypeData?.id || null,
-      guests_count: guests_count ? Number(guests_count) : null,
-      status: 'inquiry',
-      channel: 'phone',
+    const inventory = await getInventory(supabase, tenantId)
+    const result = await inventory.createBooking({
+      guestName: guest_name,
+      guestPhone: effectivePhone,
+      guestEmail: guest_email || null,
+      checkIn: check_in_date,
+      checkOut: check_out_date || null,
+      roomTypeRef: room_type || null,
+      guests: { adults: toCount(adults), children: toCount(children), childrenAges: children_ages || null },
+      // Clock's idempotency key: Vapi can send the same tool call twice.
+      callId: payload.message?.call?.id || payload.call?.id || null,
     })
 
-    if (error) {
-      console.error('[send_booking_inquiry] DB error:', JSON.stringify(error))
-    }
-
-    // Get owner email
-    const { data: tenantData } = await supabase
-      .from('tenants')
-      .select('business_name, owner_id')
-      .eq('id', tenantId)
-      .single()
-
-    if (tenantData?.owner_id) {
-      const { data: ownerData } = await supabase.auth.admin.getUserById(tenantData.owner_id)
-      const ownerEmail = ownerData?.user?.email
-      if (ownerEmail) {
-        await sendOwnerNotification(ownerEmail, {
-          guestName: guest_name,
-          guestPhone: effectivePhone,
-          checkInDate: check_in_date,
-          checkOutDate: check_out_date || null,
-          roomType: room_type || null,
-          guestsCount: guests_count ? Number(guests_count) : null,
-          channel: 'phone',
-          hotelName: tenantData.business_name || 'Хотел',
-        })
-      }
-    }
-
-    return vapiResult('Записах запитването! Рецепцията ще се свърже с Вас. Довиждане!')
+    // The database error is no longer swallowed. If nothing was written, the
+    // guest hears that, not "записах запитването".
+    return vapiResult(result.spokenResult)
   }
 
   // ── Get current date ────────────────────────────────────────────────────────

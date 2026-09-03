@@ -12,7 +12,7 @@ test('generates Bulgarian prompt with room types', () => {
   const prompt = generateSystemPrompt(profile, ['bg', 'en'])
   expect(prompt).toContain('Дентален Център Иванов')
   expect(prompt).toContain('Преглед')
-  expect(prompt).toContain('80 лв')
+  expect(prompt).toContain('80 €/нощ')
   expect(prompt).toContain('Паркинг?')
 })
 
