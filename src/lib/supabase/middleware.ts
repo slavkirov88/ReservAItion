@@ -25,9 +25,14 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register')
   const isPublicApi = pathname.startsWith('/api/public') || pathname.startsWith('/api/widget') || pathname.startsWith('/api/chat') || pathname.startsWith('/api/vapi') || pathname.startsWith('/api/stripe/webhook') || pathname.startsWith('/api/debug') || pathname.startsWith('/api/cron')
-  const isLandingPage = pathname === '/'
+  // Pages a stranger has to be able to open: the landing page, the demo we put
+  // in front of hoteliers, and the policy pages Stripe requires to be public.
+  const isPublicPage = pathname === '/'
+    || pathname.startsWith('/demo')
+    || pathname.startsWith('/terms')
+    || pathname.startsWith('/refund-policy')
 
-  if (!user && !isAuthPage && !isPublicApi && !isLandingPage) {
+  if (!user && !isAuthPage && !isPublicApi && !isPublicPage) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
@@ -39,7 +44,7 @@ export async function updateSession(request: NextRequest) {
   const isAdmin = user?.email === (process.env.ADMIN_EMAIL || '')
 
   // Onboarding + subscription gate
-  if (user && !isAdmin && !isPublicApi && !isAuthPage && !isLandingPage && pathname !== '/onboarding' && !pathname.startsWith('/api/onboarding') && !pathname.startsWith('/api/stripe')) {
+  if (user && !isAdmin && !isPublicApi && !isAuthPage && !isPublicPage && pathname !== '/onboarding' && !pathname.startsWith('/api/onboarding') && !pathname.startsWith('/api/stripe')) {
     const { data: tenant } = await supabase
       .from('tenants')
       .select('subscription_status, trial_ends_at')
