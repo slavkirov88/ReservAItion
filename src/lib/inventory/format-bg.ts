@@ -32,6 +32,28 @@ function currencyLabel(currency: string): string {
 const nights = (n: number) => (n === 1 ? 'нощувка' : 'нощувки')
 
 /**
+ * PMS room types are often codes. Read out letter by letter, "DBL" came out as
+ * "Дебел" on the demo call. The code stays in brackets because the agent hands
+ * it back to the booking tool, which matches on it.
+ */
+const SPOKEN_ROOM_CODES: Record<string, string> = {
+  SGL: 'Единична стая',
+  DBL: 'Двойна стая',
+  TWN: 'Стая с две отделни легла',
+  TRP: 'Тройна стая',
+  FAM: 'Семейна стая',
+  STD: 'Стандартна стая',
+  APP: 'Апартамент',
+  APT: 'Апартамент',
+  SUI: 'Апартамент',
+}
+
+function roomLabel(name: string): string {
+  const spoken = SPOKEN_ROOM_CODES[name.trim().toUpperCase()]
+  return spoken ? `${spoken} (код ${name.trim()})` : name
+}
+
+/**
  * Turns a machine readable restriction into something a guest understands.
  *
  * Unknown codes fall back to naming the room type without inventing a reason.
@@ -44,17 +66,17 @@ function reasonBg(offer: RoomOffer): string {
     case 'min_stay': {
       const n = Number(value)
       return Number.isFinite(n) && n > 0
-        ? `${offer.name}: свободно е, но минималният престой за тези дати е ${n} ${nights(n)}.`
-        : `${offer.name}: има минимален престой за тези дати.`
+        ? `${roomLabel(offer.name)}: свободно е, но минималният престой за тези дати е ${n} ${nights(n)}.`
+        : `${roomLabel(offer.name)}: има минимален престой за тези дати.`
     }
     case 'closed_for_arrival':
-      return `${offer.name}: за тази дата хотелът не приема настанявания.`
+      return `${roomLabel(offer.name)}: за тази дата хотелът не приема настанявания.`
     case 'stop_from_sale':
-      return `${offer.name}: продажбите за тези дати са спрени.`
+      return `${roomLabel(offer.name)}: продажбите за тези дати са спрени.`
     case 'sold_out':
-      return `${offer.name}: няма свободни стаи от този тип.`
+      return `${roomLabel(offer.name)}: няма свободни стаи от този тип.`
     default:
-      return `${offer.name}: не е свободно за тези дати.`
+      return `${roomLabel(offer.name)}: не е свободно за тези дати.`
   }
 }
 
@@ -82,7 +104,7 @@ export function formatOffersBg(
   const list = bookable
     .map((r) => {
       const capacity = r.capacity ? `, до ${r.capacity} гости` : ''
-      return `${r.name}: ${r.availableRooms} свободна/и${capacity}, ${r.pricePerNight} ${currencyLabel(r.currency)}/нощ`
+      return `${roomLabel(r.name)}: ${r.availableRooms} свободна/и${capacity}, ${r.pricePerNight} ${currencyLabel(r.currency)}/нощ`
     })
     .join('\n')
 

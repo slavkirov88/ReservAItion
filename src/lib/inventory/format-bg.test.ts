@@ -55,7 +55,7 @@ test('leaves out the capacity when the PMS did not give one', () => {
     '2026-09-12', '2026-09-14',
   )
   expect(text).not.toContain('гости')
-  expect(text).toContain('DBL: 4 свободна/и, 80 лв./нощ')
+  expect(text).toContain('Двойна стая (код DBL): 4 свободна/и, 80 лв./нощ')
 })
 
 test('a sold out type is named as sold out, not silently dropped', () => {
@@ -77,4 +77,18 @@ test('one free type and one restricted type: both are mentioned', () => {
   expect(text).toContain('DBL')
   expect(text).toContain('APP')
   expect(text).toContain('минималният престой')
+})
+
+test('room type codes are spoken as words and keep the code for the booking tool', () => {
+  const text = formatOffersBg(
+    [
+      { id: '1', name: 'DBL', pricePerNight: 55, currency: 'BGN', availableRooms: 30 },
+      { id: '2', name: 'FAM', pricePerNight: 75, currency: 'BGN', availableRooms: 0, restriction: 'min_stay:3' },
+      { id: '3', name: 'Студио', pricePerNight: 88, currency: 'EUR', availableRooms: 2 },
+    ],
+    '2026-09-20', '2026-09-22',
+  )
+  expect(text).toContain('Двойна стая (код DBL)')
+  expect(text).toContain('Семейна стая (код FAM)')
+  expect(text).toContain('Студио: 2 свободна/и')
 })
