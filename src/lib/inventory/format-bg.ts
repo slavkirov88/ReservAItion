@@ -23,8 +23,8 @@ export interface FormatOptions {
 /** Clock answers in BGN, our own rooms are in EUR. Neither is converted. */
 function currencyLabel(currency: string): string {
   switch (currency.toUpperCase()) {
-    case 'EUR': return '€'
-    case 'BGN': return 'лв.'
+    case 'EUR': return 'евро'
+    case 'BGN': return 'лева'
     default: return currency
   }
 }
@@ -104,7 +104,7 @@ export function formatOffersBg(
   const list = bookable
     .map((r) => {
       const capacity = r.capacity ? `, до ${r.capacity} гости` : ''
-      return `${roomLabel(r.name)}: ${r.availableRooms} свободна/и${capacity}, ${r.pricePerNight} ${currencyLabel(r.currency)}/нощ`
+      return `${roomLabel(r.name)}: ${r.availableRooms} свободни${capacity}, ${r.pricePerNight} ${currencyLabel(r.currency)} на нощ`
     })
     .join('\n')
 

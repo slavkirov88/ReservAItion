@@ -147,7 +147,7 @@ export function formatAvailabilityBg(
   }
 
   const list = rooms
-    .map(r => `${r.name}: ${r.available_rooms} свободна/и, до ${r.capacity} гости, ${r.price_per_night} €/нощ`)
+    .map(r => `${r.name}: ${r.available_rooms} свободни, до ${r.capacity} гости, ${r.price_per_night} евро на нощ`)
     .join('\n')
 
   return `Свободни стаи за ${checkIn} – ${checkOut}:\n${list}`

@@ -45,7 +45,7 @@ test('a fresh cache adds no warning', () => {
 test('says lev when Clock answered in lev', () => {
   const offer: RoomOffer = { id: '42414', name: 'DBL', pricePerNight: 80, currency: 'BGN', availableRooms: 4 }
   const text = formatOffersBg([offer], '2026-09-12', '2026-09-14')
-  expect(text).toContain('80 лв./нощ')
+  expect(text).toContain('80 лева на нощ')
   expect(text).not.toContain('€')
 })
 
@@ -55,7 +55,7 @@ test('leaves out the capacity when the PMS did not give one', () => {
     '2026-09-12', '2026-09-14',
   )
   expect(text).not.toContain('гости')
-  expect(text).toContain('Двойна стая (код DBL): 4 свободна/и, 80 лв./нощ')
+  expect(text).toContain('Двойна стая (код DBL): 4 свободни, 80 лева на нощ')
 })
 
 test('a sold out type is named as sold out, not silently dropped', () => {
@@ -90,5 +90,5 @@ test('room type codes are spoken as words and keep the code for the booking tool
   )
   expect(text).toContain('Двойна стая (код DBL)')
   expect(text).toContain('Семейна стая (код FAM)')
-  expect(text).toContain('Студио: 2 свободна/и')
+  expect(text).toContain('Студио: 2 свободни')
 })
