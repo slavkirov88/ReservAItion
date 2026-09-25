@@ -38,7 +38,11 @@ export async function GET(
     summary: r.guest_name,
     dtstart: r.check_in_date.slice(0, 10),
     dtend: r.check_out_date ? r.check_out_date.slice(0, 10) : r.check_in_date.slice(0, 10),
-    description: [r.notes, r.guest_phone].filter(Boolean).join(' | '),
+    // No guest phone here. This feed is fetched unauthenticated by anyone
+    // holding the URL (Booking.com, Airbnb, Google Calendar, and whoever the
+    // hotelier forwards it to). The channels only consume the dates; the phone
+    // number adds nothing for any consumer and would travel far.
+    description: r.notes || '',
     status: 'CONFIRMED',
   }))
 

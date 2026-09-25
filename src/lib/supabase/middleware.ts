@@ -24,7 +24,12 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register')
-  const isPublicApi = pathname.startsWith('/api/public') || pathname.startsWith('/api/widget') || pathname.startsWith('/api/chat') || pathname.startsWith('/api/vapi') || pathname.startsWith('/api/stripe/webhook') || pathname.startsWith('/api/debug') || pathname.startsWith('/api/cron')
+  // `/api/ical/<public_api_key>` is the calendar feed Booking.com, Airbnb and
+  // Google Calendar fetch unauthenticated. It was missing from this list, so the
+  // feed answered every external fetch with a 307 to /login and served HTML
+  // instead of text/calendar. Same pattern as /api/widget and /api/chat: the
+  // key in the URL is the credential, not the session.
+  const isPublicApi = pathname.startsWith('/api/public') || pathname.startsWith('/api/widget') || pathname.startsWith('/api/chat') || pathname.startsWith('/api/vapi') || pathname.startsWith('/api/stripe/webhook') || pathname.startsWith('/api/debug') || pathname.startsWith('/api/cron') || pathname.startsWith('/api/ical')
   // Pages a stranger has to be able to open: the landing page, the demo we put
   // in front of hoteliers, and the policy pages Stripe requires to be public.
   const isPublicPage = pathname === '/'
