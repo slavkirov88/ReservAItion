@@ -3,9 +3,8 @@
 import { useState } from 'react'
 import { BookingStep } from './booking-step'
 import { ContactStep, type Contact } from './contact-step'
-import { DetailsStep } from './details-step'
 
-type Step = 'contact' | 'booking' | 'details' | 'done'
+type Step = 'contact' | 'booking' | 'done'
 
 export function LeadFunnel() {
   const [step, setStep] = useState<Step>('contact')
@@ -22,10 +21,7 @@ export function LeadFunnel() {
     )
   }
   if (step === 'booking') {
-    return <BookingStep name={contact.name} email={contact.email} onBooked={() => setStep('details')} />
-  }
-  if (step === 'details') {
-    return <DetailsStep contact={contact} onDone={() => setStep('done')} />
+    return <BookingStep name={contact.name} email={contact.email} onBooked={() => setStep('done')} />
   }
   return (
     <div className="text-center space-y-2 py-8">

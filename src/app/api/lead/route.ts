@@ -17,26 +17,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: parsed.error }, { status: 400 })
   }
   const d = parsed.data
-  const ref = d.leadId.slice(0, 8)
 
-  const delivered =
-    d.stage === 'contact'
-      ? await sendTelegram('Нов лид ReservAItion (/razgovor)', {
-          Име: d.name,
-          Телефон: d.phone,
-          Имейл: d.email,
-          Обект: d.property,
-          Код: ref,
-        })
-      : await sendTelegram('Детайли ReservAItion (/razgovor)', {
-          Име: d.name,
-          Телефон: d.phone,
-          'Тип обект': d.propertyType,
-          Канали: d.channels.join(', '),
-          'Пропуснати обаждания': d.missedCalls,
-          'PMS / софтуер': d.pms,
-          Код: ref,
-        })
+  const delivered = await sendTelegram('Нов лид ReservAItion (/razgovor)', {
+    Име: d.name,
+    Телефон: d.phone,
+    Имейл: d.email,
+    Обект: d.property,
+    Код: d.leadId.slice(0, 8),
+  })
 
   if (!delivered) {
     console.error('LEAD_UNDELIVERED razgovor', JSON.stringify(d))

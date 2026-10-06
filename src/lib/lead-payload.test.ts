@@ -16,21 +16,12 @@ describe('parseLeadPayload', () => {
     ['bad email', { email: 'nope' }],
     ['no property', { property: '' }],
     ['no leadId', { leadId: '' }],
+    ['unknown stage', { stage: 'details' }],
   ])('rejects %s', (_label, patch) => {
     expect(parseLeadPayload({ ...contact, ...patch }).ok).toBe(false)
   })
 
-  it('rejects unknown stage and non-objects', () => {
-    expect(parseLeadPayload({ ...contact, stage: 'x' }).ok).toBe(false)
+  it('rejects non-objects', () => {
     expect(parseLeadPayload(null).ok).toBe(false)
-  })
-
-  it('details drops unknown options but stays ok', () => {
-    const r = parseLeadPayload({
-      stage: 'details', leadId: 'abc', name: 'И', phone: '1',
-      propertyType: 'Хотел', channels: ['Airbnb', 'hack'], missedCalls: 'zzz', pms: 'Clock',
-    })
-    expect(r.ok && r.data.stage === 'details' && r.data.channels).toEqual(['Airbnb'])
-    expect(r.ok && r.data.stage === 'details' && r.data.missedCalls).toBe('')
   })
 })
