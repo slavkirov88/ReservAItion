@@ -47,14 +47,14 @@ function Section({ children, className = '', id }: { children: ReactNode; classN
 
 const content = {
   bg: {
-    nav: { login: 'Вход', cta: 'Започни безплатно' },
+    nav: { login: 'Вход', cta: 'Заяви разговор' },
     hero: {
       badge: 'AI Рецепционист за хотели и имоти за краткосрочен наем',
       headline: 'Спри да пропускаш резервации',
       accent: 'докато спиш.',
       sub: 'ReservAItion отговаря на телефона, приема резервации и синхронизира с Booking.com — 24/7, на Български, без почивни дни.',
-      cta1: '📞 Обади се на демото',
-      cta2: 'Научи повече',
+      cta1: 'Заяви разговор',
+      cta2: '📞 Обади се на демото',
       hint: 'Говори директно с AI рецепционист',
       chatLabel: 'Опитай живото демо →',
       chatFallback: 'Демо ключът не е конфигуриран',
@@ -101,9 +101,9 @@ const content = {
     how: {
       title: 'Готов за 24 часа',
       steps: [
-        { num: '01', title: 'Регистрирай се', desc: 'Въведи информацията за хотела си за 10 минути.' },
-        { num: '02', title: 'Получи номер', desc: 'Даваме ти Bulgarian номер свързан с твоя AI асистент.' },
-        { num: '03', title: 'Пусни и забрави', desc: 'AI-ят поема. Ти получаваш резервации.' },
+        { num: '01', title: 'Говорим 30 минути', desc: 'Заявяваш разговор, а ние научаваме как работи твоят обект: стаи, цени, канали.' },
+        { num: '02', title: 'Настройваме всичко', desc: 'Ние въвеждаме данните, свързваме Booking.com и Airbnb и ти даваме български номер с твоя AI асистент.' },
+        { num: '03', title: 'Тестваме и пускаме', desc: 'Тестваш го заедно с нас. После AI-ят поема, а ти получаваш резервации.' },
       ],
     },
     pricing: {
@@ -112,10 +112,10 @@ const content = {
       popular: 'НАЙ-ПОПУЛЯРЕН',
       perMonth: '/мес',
       plans: [
-        { name: 'Стартер', price: '€49', setup: '+ €99 настройка', desc: 'AI чат за сайта', features: ['AI чат на сайта', 'Управление на резервации', 'До 3 типа стаи', 'Имейл известия'], missing: ['AI телефон', 'iCal sync'], cta: 'Започни', highlight: false },
-        { name: 'Про', price: '€99', setup: '+ €149 настройка', desc: 'Пълен AI рецепционист', features: ['Всичко от Стартер', 'AI телефон 24/7', 'iCal sync (Booking/Airbnb)', 'Сезонни цени', 'Блокирани дати', 'Телефонен номер'], missing: [], cta: 'Избери Про', highlight: true },
-        { name: 'Multi-property', price: '€179', setup: '+ €249 настройка', desc: 'Хотели или имоти за краткосрочен наем (3-29 имота)', features: ['Всичко от Про', 'До 29 имота', 'Multi-property dashboard', 'Custom AI глас', 'Приоритетна поддръжка'], missing: [], cta: 'Свържи се', highlight: false },
-        { name: 'Enterprise', price: 'Custom', setup: '', desc: '30+ имота', features: ['Всичко от Multi-property', 'Custom AI глас', 'Multilingual (EN, RU, GR, DE)', 'Dedicated onboarding', 'SLA', 'Custom integrations'], missing: [], cta: 'Свържи се', highlight: false, href: 'mailto:support@reservaition.com' },
+        { name: 'Стартер', price: '€49', setup: '+ €99 настройка', desc: 'AI чат за сайта', features: ['AI чат на сайта', 'Управление на резервации', 'До 3 типа стаи', 'Имейл известия'], missing: ['AI телефон', 'iCal sync'], cta: 'Заяви разговор', highlight: false },
+        { name: 'Про', price: '€99', setup: '+ €149 настройка', desc: 'Пълен AI рецепционист', features: ['Всичко от Стартер', 'AI телефон 24/7', 'iCal sync (Booking/Airbnb)', 'Сезонни цени', 'Блокирани дати', 'Телефонен номер'], missing: [], cta: 'Заяви разговор', highlight: true },
+        { name: 'Multi-property', price: '€179', setup: '+ €249 настройка', desc: 'Хотели или имоти за краткосрочен наем (3-29 имота)', features: ['Всичко от Про', 'До 29 имота', 'Multi-property dashboard', 'Custom AI глас', 'Приоритетна поддръжка'], missing: [], cta: 'Заяви разговор', highlight: false },
+        { name: 'Enterprise', price: 'Custom', setup: '', desc: '30+ имота', features: ['Всичко от Multi-property', 'Custom AI глас', 'Multilingual (EN, RU, GR, DE)', 'Dedicated onboarding', 'SLA', 'Custom integrations'], missing: [], cta: 'Заяви разговор', highlight: false },
       ],
     },
     faq: {
@@ -123,27 +123,27 @@ const content = {
       items: [
         { q: 'Говори ли AI-ят наистина Български?', a: 'Да — AI рецепционистът използва Bulgarian TTS и разбира Български естествено.' },
         { q: 'Какво се случва ако AI-ят не знае отговора?', a: 'Уведомява госта и ти изпраща имейл с въпроса.' },
-        { q: 'Трябва ли ми техническо знание?', a: 'Не. Ние настройваме всичко. Ти само попълваш информацията за хотела.' },
+        { q: 'Трябва ли ми техническо знание?', a: 'Не. Ние настройваме всичко на разговора и след него. Ти само ни казваш как работи обектът.' },
         { q: 'Мога ли да го тествам преди да платя?', a: 'Да — обади се на демо номера или изпробвай чата вдясно.' },
       ],
     },
     finalCta: {
       title: 'Готов да спреш да пропускаш резервации?',
-      sub: 'Обади се на демото и чуй как звучи твоят бъдещ AI рецепционист.',
-      cta1: '📞 Обади се сега',
-      cta2: 'Или започни безплатно →',
+      sub: 'Заяви 30-минутен разговор и ние ще настроим AI рецепциониста за твоя обект.',
+      cta1: 'Заяви разговор',
+      cta2: '📞 Обади се на демото',
     },
     footer: { tagline: 'AI рецепционист за хотели и имоти за краткосрочен наем.' },
   },
   en: {
-    nav: { login: 'Login', cta: 'Start for free' },
+    nav: { login: 'Login', cta: 'Book a call' },
     hero: {
       badge: 'AI Receptionist for Hotels & Vacation Rentals',
       headline: 'Stop missing reservations',
       accent: 'while you sleep.',
       sub: 'ReservAItion answers calls, takes reservations and syncs with Booking.com — 24/7, in Bulgarian, no days off.',
-      cta1: '📞 Call the demo',
-      cta2: 'Learn more',
+      cta1: 'Book a call',
+      cta2: '📞 Call the demo',
       hint: 'Talk directly to an AI receptionist',
       chatLabel: 'Try the live demo →',
       chatFallback: 'Demo API key not configured',
@@ -190,9 +190,9 @@ const content = {
     how: {
       title: 'Ready in 24 hours',
       steps: [
-        { num: '01', title: 'Sign up', desc: 'Add your hotel info in 10 minutes.' },
-        { num: '02', title: 'Get a number', desc: 'We give you a Bulgarian number connected to your AI assistant.' },
-        { num: '03', title: 'Launch and forget', desc: 'AI takes over. You receive reservations.' },
+        { num: '01', title: 'We talk for 30 minutes', desc: 'You book a call and we learn how your property works: rooms, prices, channels.' },
+        { num: '02', title: 'We set everything up', desc: 'We enter your data, connect Booking.com and Airbnb, and give you a Bulgarian number with your AI assistant.' },
+        { num: '03', title: 'Test and launch', desc: 'You test it with us. Then the AI takes over and you receive reservations.' },
       ],
     },
     pricing: {
@@ -201,10 +201,10 @@ const content = {
       popular: 'MOST POPULAR',
       perMonth: '/mo',
       plans: [
-        { name: 'Starter', price: '€49', setup: '+ €99 setup', desc: 'AI chat for your website', features: ['AI chat on website', 'Reservation management', 'Up to 3 room types', 'Email notifications'], missing: ['AI phone', 'iCal sync'], cta: 'Get started', highlight: false },
-        { name: 'Pro', price: '€99', setup: '+ €149 setup', desc: 'Full AI receptionist', features: ['Everything in Starter', 'AI phone 24/7', 'iCal sync (Booking/Airbnb)', 'Seasonal pricing', 'Blocked dates', 'Phone number included'], missing: [], cta: 'Choose Pro', highlight: true },
-        { name: 'Multi-property', price: '€179', setup: '+ €249 setup', desc: 'Hotels or vacation rentals (3-29 properties)', features: ['Everything in Pro', 'Up to 29 properties', 'Multi-property dashboard', 'Custom AI voice', 'Priority support'], missing: [], cta: 'Contact us', highlight: false },
-        { name: 'Enterprise', price: 'Custom', setup: '', desc: '30+ properties', features: ['Everything in Multi-property', 'Custom AI voice', 'Multilingual (EN, RU, GR, DE)', 'Dedicated onboarding', 'SLA', 'Custom integrations'], missing: [], cta: 'Contact us', highlight: false, href: 'mailto:support@reservaition.com' },
+        { name: 'Starter', price: '€49', setup: '+ €99 setup', desc: 'AI chat for your website', features: ['AI chat on website', 'Reservation management', 'Up to 3 room types', 'Email notifications'], missing: ['AI phone', 'iCal sync'], cta: 'Book a call', highlight: false },
+        { name: 'Pro', price: '€99', setup: '+ €149 setup', desc: 'Full AI receptionist', features: ['Everything in Starter', 'AI phone 24/7', 'iCal sync (Booking/Airbnb)', 'Seasonal pricing', 'Blocked dates', 'Phone number included'], missing: [], cta: 'Book a call', highlight: true },
+        { name: 'Multi-property', price: '€179', setup: '+ €249 setup', desc: 'Hotels or vacation rentals (3-29 properties)', features: ['Everything in Pro', 'Up to 29 properties', 'Multi-property dashboard', 'Custom AI voice', 'Priority support'], missing: [], cta: 'Book a call', highlight: false },
+        { name: 'Enterprise', price: 'Custom', setup: '', desc: '30+ properties', features: ['Everything in Multi-property', 'Custom AI voice', 'Multilingual (EN, RU, GR, DE)', 'Dedicated onboarding', 'SLA', 'Custom integrations'], missing: [], cta: 'Book a call', highlight: false },
       ],
     },
     faq: {
@@ -212,15 +212,15 @@ const content = {
       items: [
         { q: 'Does the AI really speak Bulgarian?', a: 'Yes — the AI receptionist uses Bulgarian TTS and understands Bulgarian naturally.' },
         { q: "What if the AI doesn't know the answer?", a: 'It notifies the guest and sends you an email with the question.' },
-        { q: 'Do I need technical knowledge?', a: 'No. We set everything up. You just fill in your hotel information.' },
+        { q: 'Do I need technical knowledge?', a: 'No. We set everything up during and after the call. You just tell us how your property works.' },
         { q: 'Can I try before paying?', a: 'Yes — call the demo number or try the chat on the right.' },
       ],
     },
     finalCta: {
       title: 'Ready to stop missing reservations?',
-      sub: 'Call the demo and hear what your future AI receptionist sounds like.',
-      cta1: '📞 Call now',
-      cta2: 'Or start for free →',
+      sub: 'Book a 30-minute call and we will set up the AI receptionist for your property.',
+      cta1: 'Book a call',
+      cta2: '📞 Call the demo',
     },
     footer: { tagline: 'AI receptionist for hotels & vacation rentals.' },
   },
@@ -251,7 +251,7 @@ export default function LandingPage() {
               {t.nav.login}
             </Link>
             <Link
-              href="/register"
+              href="/razgovor"
               className="text-sm bg-violet-600 hover:bg-violet-500 text-white px-4 py-1.5 rounded-full font-medium transition-all"
             >
               {t.nav.cta}
@@ -283,17 +283,17 @@ export default function LandingPage() {
                 {t.hero.sub}
               </motion.p>
               <motion.div custom={3} variants={fadeUp} className="flex flex-col sm:flex-row gap-4">
-                <a
-                  href={`tel:${PHONE}`}
+                <Link
+                  href="/razgovor"
                   className="flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all shadow-lg shadow-violet-600/25 hover:shadow-violet-500/40 hover:-translate-y-0.5"
                 >
                   {t.hero.cta1}
-                </a>
+                </Link>
                 <a
-                  href="#how"
+                  href={`tel:${PHONE}`}
                   className="flex items-center justify-center gap-2 border border-white/10 hover:border-white/20 px-8 py-4 rounded-2xl font-medium text-base text-white/70 hover:text-white transition-all"
                 >
-                  {t.hero.cta2} →
+                  {t.hero.cta2}
                 </a>
               </motion.div>
               <motion.p custom={4} variants={fadeUp} className="text-sm text-white/30 mt-4">
@@ -436,7 +436,6 @@ export default function LandingPage() {
           </motion.div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {t.pricing.plans.map((plan, i) => {
-              const planHref = (plan as { href?: string }).href || '/register'
               const showPerMonth = plan.price.startsWith('€')
               return (
               <motion.div
@@ -477,7 +476,7 @@ export default function LandingPage() {
                   ))}
                 </ul>
                 <Link
-                  href={planHref}
+                  href="/razgovor"
                   className={`text-center py-3 rounded-xl font-semibold text-sm transition-all ${
                     plan.highlight
                       ? 'bg-violet-600 hover:bg-violet-500 text-white'
@@ -536,18 +535,18 @@ export default function LandingPage() {
               {t.finalCta.sub}
             </motion.p>
             <motion.div variants={fadeUp} custom={2} className="flex flex-col sm:flex-row gap-4 justify-center relative">
-              <a
-                href={`tel:${PHONE}`}
+              <Link
+                href="/razgovor"
                 className="flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all shadow-lg shadow-violet-600/30"
               >
                 {t.finalCta.cta1}
-              </a>
-              <Link
-                href="/register"
+              </Link>
+              <a
+                href={`tel:${PHONE}`}
                 className="flex items-center justify-center gap-2 border border-white/10 hover:border-white/20 px-8 py-4 rounded-2xl font-medium text-base text-white/70 hover:text-white transition-all"
               >
                 {t.finalCta.cta2}
-              </Link>
+              </a>
             </motion.div>
             <p className="text-sm text-white/20 mt-6 relative">📱 {PHONE_DISPLAY}</p>
           </div>

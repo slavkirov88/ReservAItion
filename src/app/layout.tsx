@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Manrope, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { MetaPixel } from "@/components/meta-pixel";
 
 const manrope = Manrope({
   variable: "--font-sans",
@@ -37,6 +38,7 @@ export default function RootLayout({
         className={`${manrope.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground`}
       >
         {children}
+        <MetaPixel />
       </body>
     </html>
   );
