@@ -9,9 +9,6 @@ import { AnimatedCounter } from '@/components/landing/AnimatedCounter'
 
 const PHONE = '+35924920219'
 const PHONE_DISPLAY = '+359 24 920 219'
-// NEXT_PUBLIC_ vars are replaced at build time — ensure this is set in .env.local AND Vercel env vars
-// If missing, the chat section shows a placeholder "Demo API key not configured"
-const DEMO_API_KEY = process.env.NEXT_PUBLIC_DEMO_API_KEY || ''
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -57,7 +54,6 @@ const content = {
       cta2: '📞 Обади се на демото',
       hint: 'Говори директно с AI рецепционист',
       chatLabel: 'Опитай живото демо →',
-      chatFallback: 'Демо ключът не е конфигуриран',
     },
     stats: [
       { value: 800, prefix: '€', suffix: '+', label: 'спестени на месец' },
@@ -146,7 +142,6 @@ const content = {
       cta2: '📞 Call the demo',
       hint: 'Talk directly to an AI receptionist',
       chatLabel: 'Try the live demo →',
-      chatFallback: 'Demo API key not configured',
     },
     stats: [
       { value: 800, prefix: '€', suffix: '+', label: 'saved per month' },
@@ -304,13 +299,7 @@ export default function LandingPage() {
             {/* Right — Live Chat */}
             <div>
               <p className="text-sm text-violet-400/70 mb-3 font-medium">{t.hero.chatLabel}</p>
-              {DEMO_API_KEY ? (
-                <DemoChat lang={lang} apiKey={DEMO_API_KEY} />
-              ) : (
-                <div className="h-[480px] rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center text-white/20 text-sm">
-                  {t.hero.chatFallback}
-                </div>
-              )}
+              <DemoChat lang={lang} />
             </div>
           </div>
         </div>
