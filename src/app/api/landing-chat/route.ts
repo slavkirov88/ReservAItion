@@ -28,6 +28,16 @@ const tools: Anthropic.Tool[] = [
   },
 ]
 
+// The prompt is in Bulgarian, which pulls short English questions into Bulgarian answers.
+// Decide the language here instead of trusting the model.
+// Looks at everything the visitor wrote, so an email or phone number alone does not flip the language.
+function systemFor(visitorText: string) {
+  const english = /[A-Za-z]/.test(visitorText) && !/[Ѐ-ӿ]/.test(visitorText)
+  return english
+    ? `${LANDING_CHAT_PROMPT}\n\nThe visitor is writing in English. Reply ONLY in English, using "you". Do not use Bulgarian words.`
+    : LANDING_CHAT_PROMPT
+}
+
 const sse = (obj: unknown) => `data: ${JSON.stringify(obj)}\n\n`
 
 export async function POST(request: NextRequest) {
@@ -47,11 +57,15 @@ export async function POST(request: NextRequest) {
 
   const messages: Anthropic.MessageParam[] = [...sanitizeHistory(body.history), { role: 'user', content: message }]
 
+  const system = systemFor(
+    messages.filter((m) => m.role === 'user' && typeof m.content === 'string').map((m) => m.content as string).join(' ')
+  )
+
   try {
     const first = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 500,
-      system: LANDING_CHAT_PROMPT,
+      system,
       messages,
       tools,
     })
@@ -104,7 +118,7 @@ export async function POST(request: NextRequest) {
     const stream = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 500,
-      system: LANDING_CHAT_PROMPT,
+      system,
       messages: finalMessages,
       tools,
       stream: true,
