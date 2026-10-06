@@ -36,6 +36,7 @@ export async function updateSession(request: NextRequest) {
     || pathname.startsWith('/demo')
     || pathname.startsWith('/razgovor')
     || pathname.startsWith('/terms')
+    || pathname.startsWith('/privacy')
     || pathname.startsWith('/refund-policy')
 
   if (!user && !isAuthPage && !isPublicApi && !isPublicPage) {

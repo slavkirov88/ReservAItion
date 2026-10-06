@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { trackLead } from '@/lib/meta-pixel'
 import { FALLBACK_PHONE, fieldClass, primaryButtonClass } from './styles'
@@ -67,7 +68,7 @@ export function ContactStep({ onDone }: { onDone: (contact: Contact) => void }) 
         {status === 'loading' ? 'Изпращане...' : 'Продължи към избор на час'}
       </button>
       <p className="text-center text-xs text-white/40">
-        Ползваме данните ти само за да се свържем за разговора.
+        Ползваме данните ти само за да се свържем за разговора. <Link href="/privacy" className="underline">Политика за поверителност</Link>
       </p>
       {status === 'error' && (
         <p className="text-center text-sm text-red-400/90">
