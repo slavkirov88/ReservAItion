@@ -8,8 +8,9 @@ export async function sendTelegram(
   title: string,
   fields: Record<string, string>
 ): Promise<boolean> {
-  const token = process.env.TELEGRAM_BOT_TOKEN
-  const chatId = process.env.TELEGRAM_CHAT_ID
+  // Falls back to the Staydesk bot and the manager chat already set in Vercel.
+  const token = process.env.TELEGRAM_BOT_TOKEN || process.env.TRIAL_TELEGRAM_BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHAT_ID || process.env.TELEGRAM_MANAGER_CHAT_ID
   if (!token || !chatId) return false
 
   const lines = Object.entries(fields)
