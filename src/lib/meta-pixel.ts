@@ -1,3 +1,6 @@
+// Meta Pixel ID is public by design (it ships in the browser), so a fallback is safe.
+export const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || '1765988711398998'
+
 declare global {
   interface Window {
     fbq?: (...args: unknown[]) => void
