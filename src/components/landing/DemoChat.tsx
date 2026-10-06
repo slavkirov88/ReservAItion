@@ -2,7 +2,9 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
+import { trackLead } from '@/lib/meta-pixel'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -11,12 +13,11 @@ interface Message {
 
 interface Props {
   lang: 'bg' | 'en'
-  apiKey: string
 }
 
 const SUGGESTIONS = {
-  bg: ['Имате ли свободни стаи?', 'Какви са цените?', 'Как мога да резервирам?'],
-  en: ['Do you have available rooms?', 'What are the prices?', 'How can I book?'],
+  bg: ['Колко струва?', 'Как работи?', 'Искам безплатно демо'],
+  en: ['How much does it cost?', 'How does it work?', 'I want a free demo'],
 }
 
 const PLACEHOLDER = {
@@ -25,16 +26,21 @@ const PLACEHOLDER = {
 }
 
 const TITLE = {
-  bg: '🤖 AI Рецепционист — Демо',
-  en: '🤖 AI Receptionist — Demo',
+  bg: 'Попитай за ReservAItion',
+  en: 'Ask about ReservAItion',
 }
 
 const EMPTY_LABEL = {
-  bg: 'Задайте въпрос на AI рецепциониста',
-  en: 'Ask the AI receptionist anything',
+  bg: 'Питай за цени, как работи и как започваме',
+  en: 'Ask about pricing, how it works and how we start',
 }
 
-export function DemoChat({ lang, apiKey }: Props) {
+// The model is told to answer in plain text; this strips markdown if it slips anyway.
+function plain(text: string) {
+  return text.replace(/\*\*/g, '').replace(/^\s*[-*]\s+/gm, '')
+}
+
+export function DemoChat({ lang }: Props) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -60,7 +66,7 @@ export function DemoChat({ lang, apiKey }: Props) {
     let assistantText = ''
 
     try {
-      const res = await fetch(`/api/chat/${apiKey}`, {
+      const res = await fetch('/api/landing-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text, history }),
@@ -80,8 +86,9 @@ export function DemoChat({ lang, apiKey }: Props) {
           const data = line.replace('data: ', '')
           if (data === '[DONE]') { streamDone = true; break }
           try {
-            const { text: t } = JSON.parse(data)
-            assistantText += t
+            const parsed = JSON.parse(data)
+            if (parsed.lead) { trackLead('chat'); continue }
+            assistantText += parsed.text ?? ''
             setMessages(prev => {
               const copy = [...prev]
               copy[copy.length - 1] = { role: 'assistant', content: assistantText }
@@ -115,7 +122,7 @@ export function DemoChat({ lang, apiKey }: Props) {
         {messages.length === 0 && (
           <div className="space-y-2">
             <p className="text-white/40 text-sm text-center mt-8">
-              {lang === 'bg' ? 'Задайте въпрос на AI рецепциониста' : 'Ask the AI receptionist anything'}
+              {EMPTY_LABEL[lang]}
             </p>
             <div className="flex flex-col gap-2 mt-4">
               {SUGGESTIONS[lang].map((s, i) => (
@@ -145,7 +152,7 @@ export function DemoChat({ lang, apiKey }: Props) {
                     : 'bg-white/10 text-white/90'
                 }`}
               >
-                {msg.content || (loading && i === messages.length - 1 ? '...' : '')}
+                {plain(msg.content) || (loading && i === messages.length - 1 ? '...' : '')}
               </div>
             </motion.div>
           ))}
@@ -173,6 +180,9 @@ export function DemoChat({ lang, apiKey }: Props) {
             →
           </button>
         </form>
+        <Link href="/razgovor" className="block text-center text-xs text-violet-300/80 hover:text-violet-200 mt-2">
+          {lang === 'bg' ? 'Предпочиташ да си избереш час? Заяви разговор →' : 'Prefer to pick a time? Book a call →'}
+        </Link>
       </div>
     </motion.div>
   )
