@@ -33,9 +33,19 @@ const tools: Anthropic.Tool[] = [
 // Looks at everything the visitor wrote, so an email or phone number alone does not flip the language.
 function systemFor(visitorText: string) {
   const english = /[A-Za-z]/.test(visitorText) && !/[Ѐ-ӿ]/.test(visitorText)
-  return english
-    ? `${LANDING_CHAT_PROMPT}\n\nThe visitor is writing in English. Reply ONLY in English, using "you". Do not use Bulgarian words.`
-    : LANDING_CHAT_PROMPT
+  // The calendar is one-way, and the model drops that caveat when the question is short.
+  // Whenever channels or double bookings come up, the caveat is made mandatory here.
+  const channels = /booking|airbnb|букинг|еърбнб|синхрон|sync|календар|calendar|двойн|double/i.test(visitorText)
+  let system = LANDING_CHAT_PROMPT
+  if (channels) {
+    system += english
+      ? `\n\nMANDATORY for this answer: say that the calendar is one-way (we publish ours as iCal; reservations made on Booking.com or Airbnb are NOT imported automatically), so the owner must watch for overlaps. Never say there will be no double bookings.`
+      : `\n\nЗАДЪЛЖИТЕЛНО за този отговор: кажи, че календарът е еднопосочен (ние публикуваме нашия като iCal; резервациите, направени в Booking.com или Airbnb, НЕ се внасят автоматично), затова собственикът трябва сам да внимава за съвпадения. Никога не казвай, че няма да има двойни резервации.`
+  }
+  if (english) {
+    system += `\n\nThe visitor is writing in English. Reply ONLY in English, using "you". Do not use Bulgarian words.`
+  }
+  return system
 }
 
 const sse = (obj: unknown) => `data: ${JSON.stringify(obj)}\n\n`
@@ -65,6 +75,7 @@ export async function POST(request: NextRequest) {
     const first = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 500,
+      temperature: 0.3,
       system,
       messages,
       tools,
@@ -118,6 +129,7 @@ export async function POST(request: NextRequest) {
     const stream = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 500,
+      temperature: 0.3,
       system,
       messages: finalMessages,
       tools,
