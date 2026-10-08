@@ -1,6 +1,6 @@
 # ReservAItion
 
-AI-powered receptionist SaaS for Bulgarian hotels and short-term rental properties. Answers the phone, handles reservations, and syncs with Booking.com - 24/7, in Bulgarian, with no days off.
+AI-powered receptionist SaaS for Bulgarian hotels and short-term rental properties. Answers the phone in Bulgarian 24/7, records booking requests for the front desk, and publishes an iCal calendar for Booking.com and Airbnb.
 
 **Live:** [reservaition.io](https://reservaition.io)
 
@@ -8,13 +8,13 @@ AI-powered receptionist SaaS for Bulgarian hotels and short-term rental properti
 
 ## What it does
 
-Small hotels and short-term rental operators lose bookings when they miss calls outside business hours or when phones go unanswered during cleaning, check-ins, or family time. ReservAItion replaces the missed-call problem with an AI agent that:
+Small hotels and short-term rental operators lose bookings when they miss calls outside business hours or when phones go unanswered during cleaning, check-ins, or family time. ReservAItion helps with the missed-call problem with an AI agent that:
 
 - Picks up phone calls 24/7 with a natural Bulgarian-speaking voice
 - Answers guest questions about availability, pricing, amenities, and policies
-- Takes reservations end-to-end (collects guest details, confirms dates, accepts deposits)
-- Syncs reservation data with Booking.com via iCal so the calendar never double-books
-- Hands off to a human operator when the conversation exits its scope
+- Records booking requests by phone (the front desk confirms them); the website chat takes reservation requests and can collect a deposit
+- Publishes confirmed reservations as an iCal feed that can be added to Booking.com and Airbnb (one-way: reservations made there are not imported)
+- Records the request for the front desk when it cannot help
 - Also serves the same AI through a chat widget on the property's own website
 
 ---
@@ -34,12 +34,9 @@ Small hotels and short-term rental operators lose bookings when they miss calls 
 
 - AI phone receptionist (live testable on +359 24 920 219)
 - AI chat widget for property websites
-- Multi-property dashboard for operators managing several listings
-- Booking.com and Airbnb iCal synchronization (two-way calendar safety)
+- iCal export for Booking.com and Airbnb (one-way)
 - Seasonal pricing automation
-- Multilingual support on higher tiers
-- Reservation management without human intervention for standard inquiries
-- Configurable handoff rules for edge cases
+- Reservation management in the dashboard
 
 ---
 
